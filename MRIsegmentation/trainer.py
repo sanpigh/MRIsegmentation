@@ -1,10 +1,11 @@
 from google.cloud import storage
 import logging
+
 from tensorflow.keras.models import Model, load_model
 from tensorflow.keras.callbacks import ReduceLROnPlateau, EarlyStopping, ModelCheckpoint, LearningRateScheduler
 from tensorflow.keras.optimizers import Adam
 
-from MRIsegmentation.data import get_data, holdout
+from MRIsegmentation.data import get_data_from_drive, holdout
 from MRIsegmentation.params import BUCKET_NAME, EXPERIMENT_NAME, MLFLOW_URI
 from MRIsegmentation.pipeline import get_pipeline
 from MRIsegmentation.model import get_model
@@ -38,6 +39,16 @@ def load_model(model_name):
 
 class Trainer(MLFlowBase):
     def __init__(self):
+        self.X = None
+        self.y = None
+        self.X_train = None
+        self.X_train_preproc = None
+        self.X_test = None
+        self.y_train = None
+        self.y_test = None
+        self.pipe = None
+        self.network = None
+        self.history = None
         super().__init__(EXPERIMENT_NAME, MLFLOW_URI)
         logging.basicConfig(level=logging.INFO)
 
@@ -58,8 +69,7 @@ class Trainer(MLFlowBase):
                 self.mlflow_log_param(key, value)
 
             # get data
-            df = get_data(nrows=line_count)
-            print(df)
+            df = get_data_from_drive(nrows=line_count)
             logging.info(f'{line_count} rows of data loaded')
 
             # holdout
@@ -69,20 +79,14 @@ class Trainer(MLFlowBase):
             self.mlflow_log_param("model", model_name)
 
             # create model
-            model = get_model(model_name)
-
-            # create pipeline
-            pipeline = get_pipeline(model, memory='/tmp/')
-            logging.info(f'pipeline with {model_name} created')
-
-            print(pipeline.get_params().keys())
+            self.network = get_model(model_name)
 
             # compling model and callbacks functions
             adam = Adam(lr=0.05, epsilon=0.1)
 
-            model.compile(optimizer=adam,
-                          loss=focal_tversky,
-                          metrics=[tversky])
+            self.network.compile(optimizer=adam,
+                                 loss=focal_tversky,
+                                 metrics=[tversky])
             #callbacks
             earlystopping = EarlyStopping(monitor='val_loss',
                                           mode='min',
@@ -108,22 +112,14 @@ class Trainer(MLFlowBase):
             #                            n_jobs=-1,
             #                            pre_dispatch=2 * n_jobs)
 
-            # train with gridsearch
-            # logging.info(f'fitting GridSearchCV')
-            # grid_search.fit(X_train, y_train)
-
-            # score gridsearch
-            # logging.info(f'scoring best model')
-            # score = grid_search.score(X_test, y_test)
-
-            history = model.fit(
-                train_data,
+            self.history = self.network.fit(
+                self.X_train,
                 epochs=60,
-                validation_data=val_data,
+                validation_data=self.X_test,
                 callbacks=[checkpointer, earlystopping, reduce_lr])
 
             # save the trained model
-            save_model(model, model_name)
+            save_model(self.network, model_name)
             logging.info(f'best {model_name} saved')
 
             # push best params & score to mlflow
@@ -131,11 +127,12 @@ class Trainer(MLFlowBase):
             #    self.mlflow_log_param('best__' + k, v)
 
             # push metrics to mlflow
-            self.mlflow_log_metric('loss', history.history['loss'])
-            self.mlflow_log_metric('val_loss', history.history['val_loss'])
-            self.mlflow_log_metric('tversky', history.history['tversky'])
+            self.mlflow_log_metric('loss', self.history.history['loss'])
+            self.mlflow_log_metric('val_loss',
+                                   self.history.history['val_loss'])
+            self.mlflow_log_metric('tversky', self.history.history['tversky'])
             self.mlflow_log_metric('val_tversky',
-                                   history.history['val_tversky'])
+                                   self.history.history['val_tversky'])
 
             # return the gridsearch in order to identify the best estimators and params
 
