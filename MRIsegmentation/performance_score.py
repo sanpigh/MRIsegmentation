@@ -2,7 +2,7 @@ from sklearn.metrics import f1_score
 from tensorflow.keras.metrics import MeanIoU
 
 def performance_score(y_true, y_pred):
-    ''' function that returns a dictionnary with the F1 and IoU scores'''
+    ''' function that returns a dictionnary with the F1 and IoU scores !'''
     # Calculer score IoU 
     m=MeanIoU(num_classes=2)
     m.reset_state()
