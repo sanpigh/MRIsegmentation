@@ -1,5 +1,7 @@
 import tensorflow as tf
 import tensorflow.keras.backend as K
+from sklearn.metrics import f1_score
+from tensorflow.keras.metrics import MeanIoU
 
 def tversky(y_true, y_pred, smooth=1):
     y_true_pos = K.flatten(y_true)
@@ -20,3 +22,14 @@ def focal_tversky(y_true,y_pred):
 
 def tversky_loss(y_true, y_pred):
     return 1 - tversky(y_true,y_pred)
+
+def F1_score(y_true, y_pred):   
+    f1= round(f1_score(y_true=y_true, y_pred=y_pred),2)
+    return f1
+
+def IoU_score(y_true, y_pred):
+    m=MeanIoU(num_classes=2)
+    m.reset_state()
+    m.update_state(y_true, y_pred)
+    IoU=round(m.result().numpy(),2)    
+    return IoU
