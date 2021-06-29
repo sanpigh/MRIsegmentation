@@ -1,6 +1,7 @@
 from google.cloud import storage
+import pandas as pd
 
-from MRIsegmentation.params import BUCKET_NAME, BUCKET_DATA_PATH
+from MRIsegmentation.params import GDRIVE_DATA_PATH, BUCKET_NAME, BUCKET_DATA_PATH
 
 
 def get_data(nrows=1_000):
@@ -14,6 +15,12 @@ def get_data(nrows=1_000):
     df = []
 
     return df
+
+
+def get_data_from_drive():
+    data = pd.read_csv(GDRIVE_DATA_PATH + '/kaggle_3m/data.csv')
+
+    return data
 
 
 def list_blobs(bucket_name):
