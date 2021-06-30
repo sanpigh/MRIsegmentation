@@ -1,2 +1,2 @@
-def get_pipeline(model, memory='/tmp/'):
+def get_pipeline(model, memory="/tmp/"):
     return None

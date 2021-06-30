@@ -2,7 +2,12 @@ from google.cloud import storage
 import logging
 
 from tensorflow.keras.models import Model, load_model
-from tensorflow.keras.callbacks import ReduceLROnPlateau, EarlyStopping, ModelCheckpoint, LearningRateScheduler
+from tensorflow.keras.callbacks import (
+    ReduceLROnPlateau,
+    EarlyStopping,
+    ModelCheckpoint,
+    LearningRateScheduler,
+)
 from tensorflow.keras.optimizers import Adam
 
 from MRIsegmentation.data import get_data_from_drive, holdout
@@ -29,12 +34,14 @@ def load_model(model_name):
     blob = bucket.blob("models/" + f"best_{model_name}.h5")
     blob.download_to_filename(f"best_{model_name}.h5")
 
-    return load_model(f"best_{model_name}.h5",
-                      custom_objects={
-                          "focal_tversky": focal_tversky,
-                          "tversky": tversky,
-                          "tversky_loss": tversky_loss
-                      })
+    return load_model(
+        f"best_{model_name}.h5",
+        custom_objects={
+            "focal_tversky": focal_tversky,
+            "tversky": tversky,
+            "tversky_loss": tversky_loss,
+        },
+    )
 
 
 class Trainer(MLFlowBase):
@@ -70,9 +77,9 @@ class Trainer(MLFlowBase):
 
             # get data
             df = get_data_from_drive()
-            logging.info(f'Data loaded')
+            logging.info(f"Data loaded")
 
-            ds_train, ds_test = holdout(df, test_size=0.2)
+            ds_train, ds_test, ds_val = holdout(df, train_size=0.7)
 
             # log params
             self.mlflow_log_param("model", model_name)
@@ -83,25 +90,24 @@ class Trainer(MLFlowBase):
             # compling model and callbacks functions
             adam = Adam(lr=0.05, epsilon=0.1)
 
-            self.network.compile(optimizer=adam,
-                                 loss=focal_tversky,
-                                 metrics=[tversky])
-            #callbacks
-            earlystopping = EarlyStopping(monitor='val_loss',
-                                          mode='min',
-                                          verbose=1,
-                                          patience=30)
+            self.network.compile(optimizer=adam, loss=focal_tversky, metrics=[tversky])
+            # callbacks
+            earlystopping = EarlyStopping(
+                monitor="val_loss", mode="min", verbose=1, patience=30
+            )
             # save the best model with lower validation loss
-            checkpointer = ModelCheckpoint(filepath="seg_model.h5",
-                                           verbose=1,
-                                           save_best_only=True)
+            checkpointer = ModelCheckpoint(
+                filepath="seg_model.h5", verbose=1, save_best_only=True
+            )
 
-            reduce_lr = ReduceLROnPlateau(monitor='val_loss',
-                                          mode='min',
-                                          verbose=1,
-                                          patience=10,
-                                          min_delta=0.0001,
-                                          factor=0.2)
+            reduce_lr = ReduceLROnPlateau(
+                monitor="val_loss",
+                mode="min",
+                verbose=1,
+                patience=10,
+                min_delta=0.0001,
+                factor=0.2,
+            )
 
             # create gridsearch object
             # n_jobs = multiprocessing.cpu_count()
@@ -113,29 +119,26 @@ class Trainer(MLFlowBase):
             #                            pre_dispatch=2 * n_jobs)
 
             self.history = self.network.fit(
-                ds_train,
-                epochs=60,
-                callbacks=[checkpointer, earlystopping, reduce_lr])
+                ds_train, epochs=60, callbacks=[checkpointer, earlystopping, reduce_lr]
+            )
 
             # save the trained model
             save_model(self.network, model_name)
-            logging.info(f'best {model_name} saved')
+            logging.info(f"best {model_name} saved")
 
             # push best params & score to mlflow
-            #for k, v in grid_search.best_params_.items():
+            # for k, v in grid_search.best_params_.items():
             #    self.mlflow_log_param('best__' + k, v)
 
             # push metrics to mlflow
-            self.mlflow_log_metric('loss', self.history.history['loss'])
-            self.mlflow_log_metric('val_loss',
-                                   self.history.history['val_loss'])
-            self.mlflow_log_metric('tversky', self.history.history['tversky'])
-            self.mlflow_log_metric('val_tversky',
-                                   self.history.history['val_tversky'])
+            self.mlflow_log_metric("loss", self.history.history["loss"])
+            self.mlflow_log_metric("val_loss", self.history.history["val_loss"])
+            self.mlflow_log_metric("tversky", self.history.history["tversky"])
+            self.mlflow_log_metric("val_tversky", self.history.history["val_tversky"])
 
             # return the gridsearch in order to identify the best estimators and params
 
-        return f'goto {MLFLOW_URI}/#/experiments/{self.mlflow_experiment_id}'
+        return f"goto {MLFLOW_URI}/#/experiments/{self.mlflow_experiment_id}"
 
     def predict(self, df, model_name="vgg19"):
         print(model_name)
@@ -150,4 +153,4 @@ if __name__ == "__main__":
     # Run a trainer
     trainer = Trainer()
     result = trainer.train(params)
-    logging.info(f'done! {result}')
+    logging.info(f"done! {result}")
