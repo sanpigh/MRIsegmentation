@@ -1,12 +1,13 @@
 import glob
+from http.client import LENGTH_REQUIRED
 import logging
 import pandas as pd
 import numpy as np
 import os
 import random
 
-import cv2
 from google.cloud import storage
+import tensorflow as tf
 
 from MRIsegmentation.params import GDRIVE_DATA_PATH, BUCKET_NAME, BUCKET_DATA_PATH
 
@@ -80,7 +81,6 @@ def get_data_from_drive():
 
 def list_blobs(bucket_name):
     """Lists all the blobs in the bucket."""
-    # bucket_name = "your-bucket-name"
 
     storage_client = storage.Client()
 
@@ -94,5 +94,22 @@ def list_blobs(bucket_name):
     return lb
 
 
-def holdout(df, test_size=0.2):
-    return None, None, None, None
+def holdout(df, train_ratio=0.8):
+
+    img_paths = df['image_path'].values
+    msk_paths = df['mmask_path'].values
+
+    full_size = df.shape[0]
+
+    test_size = int((1 - train_ratio) * 0.5)
+    val_size = test_size
+    train_size = full_size - val_size - test_size
+
+    ds = tf.data.Dataset.from_tensor_slices((img_paths, msk_paths))
+    ds = ds.shuffle(seed=42)
+    ds_train = ds.keep(train_size)
+    ds_test = ds.skip(train_size)
+    ds_val = ds_test.skip(val_size)
+    ds_test = ds_test.take(test_size)
+
+    return ds_train, ds_val, ds_test

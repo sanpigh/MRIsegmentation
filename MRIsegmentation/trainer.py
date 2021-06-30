@@ -69,11 +69,10 @@ class Trainer(MLFlowBase):
                 self.mlflow_log_param(key, value)
 
             # get data
-            df = get_data_from_drive(nrows=line_count)
-            logging.info(f'{line_count} rows of data loaded')
+            df = get_data_from_drive()
+            logging.info(f'Data loaded')
 
-            # holdout
-            X_train, X_test, y_train, y_test = holdout(df, test_size=0.2)
+            ds_train, ds_test = holdout(df, test_size=0.2)
 
             # log params
             self.mlflow_log_param("model", model_name)
@@ -96,6 +95,7 @@ class Trainer(MLFlowBase):
             checkpointer = ModelCheckpoint(filepath="seg_model.h5",
                                            verbose=1,
                                            save_best_only=True)
+
             reduce_lr = ReduceLROnPlateau(monitor='val_loss',
                                           mode='min',
                                           verbose=1,
@@ -113,9 +113,8 @@ class Trainer(MLFlowBase):
             #                            pre_dispatch=2 * n_jobs)
 
             self.history = self.network.fit(
-                self.X_train,
+                ds_train,
                 epochs=60,
-                validation_data=self.X_test,
                 callbacks=[checkpointer, earlystopping, reduce_lr])
 
             # save the trained model
