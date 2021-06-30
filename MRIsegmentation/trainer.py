@@ -72,14 +72,13 @@ class Trainer(MLFlowBase):
 
             # get data
             df = get_data_from_drive()
-            print(df)
             logging.info(f"Data loaded: {df.shape}")
 
             # holdout
             ds_train, ds_val, ds_test = holdout(df)
 
             # log params
-            self.mlflow_log_param("model", model_name)
+            logging.info(f"Loading model: {model_name}")
 
             # create model
             model = get_model(model_name)
