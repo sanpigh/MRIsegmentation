@@ -109,6 +109,11 @@ class Trainer(MLFlowBase):
                 factor=0.2,
             )
 
+            batch_size = 16
+            ds_train = (
+                ds_train.map(process_path).map(normalize).batch(batch_size=batch_size)
+            )
+
             history = model.fit(
                 ds_train,
                 epochs=60,
