@@ -6,6 +6,7 @@ import numpy as np
 import os
 import random
 
+from sklearn.model_selection import train_test_split
 from google.cloud import storage
 import tensorflow as tf
 
@@ -49,17 +50,16 @@ def holdout(df, train_ratio=0.8):
     img_paths = df["image_path"].values
     msk_paths = df["mask_path"].values
 
-    full_size = df.shape[0]
+    df_mask = df[df['mask'] == 1]
 
-    test_size = int((1 - train_ratio) * 0.5)
-    val_size = test_size
-    train_size = full_size - val_size - test_size
+    df_train, df_val = train_test_split(df_mask, train_size=train_ratio)
+    df_test, df_val = train_test_split(df_val, test_size=0.5)
 
-    ds = tf.data.Dataset.from_tensor_slices((img_paths, msk_paths))
-    ds = ds.shuffle(df.shape[0], seed=42)
-    ds_train = ds.keep(train_size)
-    ds_test = ds.skip(train_size)
-    ds_val = ds_test.skip(val_size)
-    ds_test = ds_test.take(test_size)
+    ds_train = tf.data.Dataset.from_tensor_slices(
+        (df_train["image_path"].values, df_train["mask_path"].values))
+    ds_val = tf.data.Dataset.from_tensor_slices(
+        (df_val["image_path"].values, df_val["mask_path"].values))
+    ds_test = tf.data.Dataset.from_tensor_slices(
+        (df_test["image_path"].values, df_test["mask_path"].values))
 
     return ds_train, ds_val, ds_test
