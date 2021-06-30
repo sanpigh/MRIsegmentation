@@ -10,6 +10,7 @@ pandas
 scikit-learn
 tensorflow
 tensorflow-io
+tensorflow-addons
 
 # tests/linter
 black

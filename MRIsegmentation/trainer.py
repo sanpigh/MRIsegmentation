@@ -90,15 +90,18 @@ class Trainer(MLFlowBase):
             # compling model and callbacks functions
             adam = Adam(lr=0.05, epsilon=0.1)
 
-            self.network.compile(optimizer=adam, loss=focal_tversky, metrics=[tversky])
+            self.network.compile(optimizer=adam,
+                                 loss=focal_tversky,
+                                 metrics=[tversky])
             # callbacks
-            earlystopping = EarlyStopping(
-                monitor="val_loss", mode="min", verbose=1, patience=30
-            )
+            earlystopping = EarlyStopping(monitor="val_loss",
+                                          mode="min",
+                                          verbose=1,
+                                          patience=30)
             # save the best model with lower validation loss
-            checkpointer = ModelCheckpoint(
-                filepath="seg_model.h5", verbose=1, save_best_only=True
-            )
+            checkpointer = ModelCheckpoint(filepath="seg_model.h5",
+                                           verbose=1,
+                                           save_best_only=True)
 
             reduce_lr = ReduceLROnPlateau(
                 monitor="val_loss",
@@ -118,12 +121,23 @@ class Trainer(MLFlowBase):
             #                            n_jobs=-1,
             #                            pre_dispatch=2 * n_jobs)
 
-            self.history = self.network.fit(
-                ds_train, epochs=60, callbacks=[checkpointer, earlystopping, reduce_lr]
+            # train with gridsearch
+            # logging.info(f'fitting GridSearchCV')
+            # grid_search.fit(X_train, y_train)
+
+            # score gridsearch
+            # logging.info(f'scoring best model')
+            # score = grid_search.score(X_test, y_test)
+
+            history = model.fit(
+                train_data,
+                epochs=60,
+                validation_data=val_data,
+                callbacks=[checkpointer, earlystopping, reduce_lr],
             )
 
             # save the trained model
-            save_model(self.network, model_name)
+            save_model(model, model_name)
             logging.info(f"best {model_name} saved")
 
             # push best params & score to mlflow
@@ -132,9 +146,11 @@ class Trainer(MLFlowBase):
 
             # push metrics to mlflow
             self.mlflow_log_metric("loss", self.history.history["loss"])
-            self.mlflow_log_metric("val_loss", self.history.history["val_loss"])
+            self.mlflow_log_metric("val_loss",
+                                   self.history.history["val_loss"])
             self.mlflow_log_metric("tversky", self.history.history["tversky"])
-            self.mlflow_log_metric("val_tversky", self.history.history["val_tversky"])
+            self.mlflow_log_metric("val_tversky",
+                                   self.history.history["val_tversky"])
 
             # return the gridsearch in order to identify the best estimators and params
 

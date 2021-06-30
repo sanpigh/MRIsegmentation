@@ -2,6 +2,8 @@ import tensorflow as tf
 import tensorflow.keras.backend as K
 import tensorflow_io as tfio
 from tensorflow.python.ops import io_ops
+from tensorflow_addons.metrics import F1Score
+from tensorflow.keras.metrics import MeanIoU
 
 
 def tversky(y_true, y_pred, smooth=1):
@@ -26,6 +28,23 @@ def focal_tversky(y_true, y_pred):
 
 def tversky_loss(y_true, y_pred):
     return 1 - tversky(y_true, y_pred)
+
+
+def F1_score(y_true, y_pred):
+    """input and output are np array"""
+    metric = F1Score(num_classes=1, threshold=0.5)
+    metric.update_state(y_true, y_pred)
+    result = metric.result()
+    f1 = result.numpy()
+    return f1
+
+
+def IoU_score(y_true, y_pred):
+    m = MeanIoU(num_classes=2)
+    m.reset_state()
+    m.update_state(y_true, y_pred)
+    IoU = round(m.result().numpy(), 2)
+    return IoU
 
 
 def load_scan_and_mask(x, y):
