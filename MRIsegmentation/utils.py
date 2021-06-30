@@ -76,3 +76,7 @@ def process_path(mri_path, mask_path):
     # tf.strings.split()
 
     return mri_img, mask_img
+
+
+def normalize(image, mask):
+    return image / 255, mask / 255

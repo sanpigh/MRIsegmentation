@@ -14,7 +14,13 @@ from MRIsegmentation.params import BUCKET_NAME, EXPERIMENT_NAME, MLFLOW_URI
 from MRIsegmentation.pipeline import get_pipeline
 from MRIsegmentation.model import get_model
 from MRIsegmentation.mlflow import MLFlowBase
-from MRIsegmentation.utils import focal_tversky, tversky, tversky_loss
+from MRIsegmentation.utils import (
+    focal_tversky,
+    tversky,
+    tversky_loss,
+    process_path,
+    normalize,
+)
 
 
 def save_model(best_model, model_name):
