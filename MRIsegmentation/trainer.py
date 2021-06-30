@@ -1,6 +1,5 @@
 from google.cloud import storage
 import logging
-
 from tensorflow.keras.models import Model, load_model
 from tensorflow.keras.callbacks import (
     ReduceLROnPlateau,
@@ -10,7 +9,7 @@ from tensorflow.keras.callbacks import (
 )
 from tensorflow.keras.optimizers import Adam
 
-from MRIsegmentation.data import get_data_from_drive, holdout
+from MRIsegmentation.data import get_data, get_data_from_drive, holdout
 from MRIsegmentation.params import BUCKET_NAME, EXPERIMENT_NAME, MLFLOW_URI
 from MRIsegmentation.pipeline import get_pipeline
 from MRIsegmentation.model import get_model
@@ -46,16 +45,6 @@ def load_model(model_name):
 
 class Trainer(MLFlowBase):
     def __init__(self):
-        self.X = None
-        self.y = None
-        self.X_train = None
-        self.X_train_preproc = None
-        self.X_test = None
-        self.y_train = None
-        self.y_test = None
-        self.pipe = None
-        self.network = None
-        self.history = None
         super().__init__(EXPERIMENT_NAME, MLFLOW_URI)
         logging.basicConfig(level=logging.INFO)
 
@@ -77,34 +66,36 @@ class Trainer(MLFlowBase):
 
             # get data
             df = get_data_from_drive()
-            logging.info(f"Data loaded")
+            print(df)
+            logging.info(f"Data loaded: {df.shape}")
 
-            ds_train, ds_test, ds_val = holdout(df, train_size=0.7)
+            # holdout
+            ds_train, ds_val, ds_test = holdout(df)
 
             # log params
             self.mlflow_log_param("model", model_name)
 
             # create model
-            self.network = get_model(model_name)
+            model = get_model(model_name)
 
             # compling model and callbacks functions
             adam = Adam(lr=0.05, epsilon=0.1)
 
-            self.network.compile(optimizer=adam,
-                                 loss=focal_tversky,
-                                 metrics=[tversky])
-            # callbacks
-            earlystopping = EarlyStopping(monitor="val_loss",
-                                          mode="min",
-                                          verbose=1,
-                                          patience=30)
-            # save the best model with lower validation loss
-            checkpointer = ModelCheckpoint(filepath="seg_model.h5",
-                                           verbose=1,
-                                           save_best_only=True)
+            model.compile(optimizer=adam, loss=focal_tversky, metrics=[tversky])
 
+            # callbacks
+            earlystopping = EarlyStopping(
+                monitor="tversky_loss", mode="min", verbose=1, patience=30
+            )
+
+            # save the best model with lower validation loss
+            checkpointer = ModelCheckpoint(
+                filepath="seg_model.h5", verbose=1, save_best_only=True
+            )
+
+            # reduce learning rate when on a plateau
             reduce_lr = ReduceLROnPlateau(
-                monitor="val_loss",
+                monitor="tversky_loss",
                 mode="min",
                 verbose=1,
                 patience=10,
@@ -112,27 +103,9 @@ class Trainer(MLFlowBase):
                 factor=0.2,
             )
 
-            # create gridsearch object
-            # n_jobs = multiprocessing.cpu_count()
-            # logging.info(f'found {n_jobs} cpus')
-            # grid_search = GridSearchCV(pipeline,
-            #                            param_grid=hyper_params,
-            #                            cv=5,
-            #                            n_jobs=-1,
-            #                            pre_dispatch=2 * n_jobs)
-
-            # train with gridsearch
-            # logging.info(f'fitting GridSearchCV')
-            # grid_search.fit(X_train, y_train)
-
-            # score gridsearch
-            # logging.info(f'scoring best model')
-            # score = grid_search.score(X_test, y_test)
-
             history = model.fit(
-                train_data,
+                ds_train,
                 epochs=60,
-                validation_data=val_data,
                 callbacks=[checkpointer, earlystopping, reduce_lr],
             )
 
@@ -145,12 +118,10 @@ class Trainer(MLFlowBase):
             #    self.mlflow_log_param('best__' + k, v)
 
             # push metrics to mlflow
-            self.mlflow_log_metric("loss", self.history.history["loss"])
-            self.mlflow_log_metric("val_loss",
-                                   self.history.history["val_loss"])
-            self.mlflow_log_metric("tversky", self.history.history["tversky"])
-            self.mlflow_log_metric("val_tversky",
-                                   self.history.history["val_tversky"])
+            self.mlflow_log_metric("loss", history.history["loss"])
+            self.mlflow_log_metric("val_loss", history.history["val_loss"])
+            self.mlflow_log_metric("tversky", history.history["tversky"])
+            self.mlflow_log_metric("val_tversky", history.history["val_tversky"])
 
             # return the gridsearch in order to identify the best estimators and params
 
