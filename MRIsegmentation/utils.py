@@ -1,5 +1,7 @@
 import tensorflow as tf
 import tensorflow.keras.backend as K
+import tensorflow_io as tfio
+from tensorflow.python.ops import io_ops
 
 
 def tversky(y_true, y_pred, smooth=1):
@@ -9,9 +11,8 @@ def tversky(y_true, y_pred, smooth=1):
     false_neg = K.sum(y_true_pos * (1 - y_pred_pos))
     false_pos = K.sum((1 - y_true_pos) * y_pred_pos)
     alpha = 0.7
-    return (true_pos + smooth) / (
-        true_pos + alpha * false_neg + (1 - alpha) * false_pos + smooth
-    )
+    return (true_pos + smooth) / (true_pos + alpha * false_neg +
+                                  (1 - alpha) * false_pos + smooth)
 
 
 def focal_tversky(y_true, y_pred):
@@ -25,3 +26,8 @@ def focal_tversky(y_true, y_pred):
 
 def tversky_loss(y_true, y_pred):
     return 1 - tversky(y_true, y_pred)
+
+
+def load_scan_and_mask(x, y):
+    return (tfio.experimental.image.decode_tiff(io_ops.read_file(x)),
+            tfio.experimental.image.decode_tiff(io_ops.read_file(y)))
