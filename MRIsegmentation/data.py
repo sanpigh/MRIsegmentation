@@ -28,7 +28,7 @@ def get_data(nrows=1_000):
 def get_data_from_drive():
     return pd.read_csv(GDRIVE_DATA_PATH + "/kaggle_3m/brain_df.csv")
 
-≥
+
 def list_blobs(bucket_name):
     """Lists all the blobs in the bucket."""
 
