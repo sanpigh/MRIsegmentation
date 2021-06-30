@@ -1,5 +1,5 @@
+import cv2
 import glob
-from http.client import LENGTH_REQUIRED
 import logging
 import pandas as pd
 import numpy as np
@@ -7,6 +7,7 @@ import os
 import random
 
 from google.cloud import storage
+from http.client import LENGTH_REQUIRED
 import tensorflow as tf
 
 from MRIsegmentation.params import GDRIVE_DATA_PATH, BUCKET_NAME, BUCKET_DATA_PATH
