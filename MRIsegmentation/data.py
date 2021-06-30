@@ -20,11 +20,11 @@ def pos_neg_diagnosis(mask_path):
 
 
 def get_data(nrows=1_000):
-    '''returns a DataFrame with nrows from s3 bucket'''
+    """returns a DataFrame with nrows from s3 bucket"""
     assert nrows <= 1_000
     blob_list = list_blobs(f"gs://{BUCKET_NAME}/{BUCKET_DATA_PATH}")
 
-    #df = pd.read_csv(f"gs://{BUCKET_NAME}/{BUCKET_DATA_PATH}", nrows=nrows)
+    # df = pd.read_csv(f"gs://{BUCKET_NAME}/{BUCKET_DATA_PATH}", nrows=nrows)
     print(blob_list)
 
     df = []
@@ -33,25 +33,25 @@ def get_data(nrows=1_000):
 
 
 def get_data_from_drive():
-    data = pd.read_csv(GDRIVE_DATA_PATH + '/kaggle_3m/data.csv')
+    data = pd.read_csv(GDRIVE_DATA_PATH + "/kaggle_3m/data.csv")
 
     data_map = []
 
     for sub_dir_path in glob.glob(GDRIVE_DATA_PATH + "kaggle_3m/*"):
-        #if os.path.isdir(sub_path_dir):
+        # if os.path.isdir(sub_path_dir):
         try:
-            dir_name = sub_dir_path.split('/')[-1]
+            dir_name = sub_dir_path.split("/")[-1]
             for filename in os.listdir(sub_dir_path):
-                image_path = sub_dir_path + '/' + filename
+                image_path = sub_dir_path + "/" + filename
                 data_map.extend([dir_name, image_path])
         except Exception as e:
             logging.info(e)
 
     df = pd.DataFrame({"patient_id": data_map[::2], "path": data_map[1::2]})
 
-    df_imgs = df[~df['path'].str.contains("mask")]  # if have not mask
+    df_imgs = df[~df["path"].str.contains("mask")]  # if have not mask
 
-    df_masks = df[df['path'].str.contains("mask")]  # if have mask
+    df_masks = df[df["path"].str.contains("mask")]  # if have mask
 
     # File path line length images for later sorting
     BASE_LEN = len(
@@ -61,19 +61,20 @@ def get_data_from_drive():
     END_MASK_LEN = 9
 
     # Data sorting
-    imgs = sorted(df_imgs["path"].values,
-                  key=lambda x: int(x[BASE_LEN:-END_IMG_LEN]))
-    masks = sorted(df_masks["path"].values,
-                   key=lambda x: int(x[BASE_LEN:-END_MASK_LEN]))
+    imgs = sorted(df_imgs["path"].values, key=lambda x: int(x[BASE_LEN:-END_IMG_LEN]))
+    masks = sorted(
+        df_masks["path"].values, key=lambda x: int(x[BASE_LEN:-END_MASK_LEN])
+    )
 
-    brain_df = pd.DataFrame({
-        "patient_id": df_imgs.patient_id.values,
-        "image_path": imgs,
-        "mask_path": masks
-    })
+    brain_df = pd.DataFrame(
+        {
+            "patient_id": df_imgs.patient_id.values,
+            "image_path": imgs,
+            "mask_path": masks,
+        }
+    )
 
-    brain_df['mask'] = brain_df['mask_path'].apply(
-        lambda x: pos_neg_diagnosis(x))
+    brain_df["mask"] = brain_df["mask_path"].apply(lambda x: pos_neg_diagnosis(x))
 
     return brain_df
 

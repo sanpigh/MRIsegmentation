@@ -1,5 +1,14 @@
-from tensorflow.keras.layers import Conv2D, BatchNormalization, Activation, MaxPool2D, Conv2DTranspose, Concatenate, Input
+from tensorflow.keras.layers import (
+    Conv2D,
+    BatchNormalization,
+    Activation,
+    MaxPool2D,
+    Conv2DTranspose,
+    Concatenate,
+    Input,
+)
 from tensorflow.keras.applications import VGG19
+
 
 def conv_block(input, num_filters):
     x = Conv2D(num_filters, 3, padding="same")(input)
@@ -12,14 +21,16 @@ def conv_block(input, num_filters):
 
     return x
 
+
 def decoder_block(input, skip_features, num_filters):
     x = Conv2DTranspose(num_filters, (2, 2), strides=2, padding="same")(input)
     x = Concatenate()([x, skip_features])
     x = conv_block(x, num_filters)
     return x
 
+
 def build_vgg19_unet(input_shape):
-    """ Input """
+    """Input"""
     inputs = Input(input_shape)
 
     """ Pre-trained VGG19 Model """
@@ -35,10 +46,10 @@ def build_vgg19_unet(input_shape):
     b1 = vgg19.get_layer("block5_conv4").output
 
     """ Decoder """
-    d1 = decoder_block(b1, s4, 512)                     
-    d2 = decoder_block(d1, s3, 256)                     
-    d3 = decoder_block(d2, s2, 128)                    
-    d4 = decoder_block(d3, s1, 64)                      
+    d1 = decoder_block(b1, s4, 512)
+    d2 = decoder_block(d1, s3, 256)
+    d3 = decoder_block(d2, s2, 128)
+    d4 = decoder_block(d3, s1, 64)
 
     """ Output """
     outputs = Conv2D(1, 1, padding="same", activation="sigmoid")(d4)
@@ -46,12 +57,13 @@ def build_vgg19_unet(input_shape):
     model = Model(inputs, outputs, name="VGG19_U-Net")
     return model
 
-def get_model(model_name='vgg19'):
+
+def get_model(model_name="vgg19"):
 
     model = None
 
-    if model_name == 'vgg19':
-        model = build_vgg19_unet((256,256,3))
+    if model_name == "vgg19":
+        model = build_vgg19_unet((256, 256, 3))
         print(model.summary())
 
         return model
