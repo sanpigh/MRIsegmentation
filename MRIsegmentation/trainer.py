@@ -1,5 +1,6 @@
 from google.cloud import storage
 import logging
+
 from tensorflow.keras.models import Model, load_model
 from tensorflow.keras.callbacks import (
     ReduceLROnPlateau,
@@ -9,7 +10,7 @@ from tensorflow.keras.callbacks import (
 )
 from tensorflow.keras.optimizers import Adam
 
-from MRIsegmentation.data import get_data, holdout
+from MRIsegmentation.data import get_data_from_drive, holdout
 from MRIsegmentation.params import BUCKET_NAME, EXPERIMENT_NAME, MLFLOW_URI
 from MRIsegmentation.pipeline import get_pipeline
 from MRIsegmentation.model import get_model
@@ -45,6 +46,16 @@ def load_model(model_name):
 
 class Trainer(MLFlowBase):
     def __init__(self):
+        self.X = None
+        self.y = None
+        self.X_train = None
+        self.X_train_preproc = None
+        self.X_test = None
+        self.y_train = None
+        self.y_test = None
+        self.pipe = None
+        self.network = None
+        self.history = None
         super().__init__(EXPERIMENT_NAME, MLFLOW_URI)
         logging.basicConfig(level=logging.INFO)
 
@@ -65,37 +76,33 @@ class Trainer(MLFlowBase):
                 self.mlflow_log_param(key, value)
 
             # get data
-            df = get_data(nrows=line_count)
-            print(df)
-            logging.info(f"{line_count} rows of data loaded")
+            df = get_data_from_drive()
+            logging.info(f"Data loaded")
 
-            # holdout
-            X_train, X_test, y_train, y_test = holdout(df, test_size=0.2)
+            ds_train, ds_test, ds_val = holdout(df, train_size=0.7)
 
             # log params
             self.mlflow_log_param("model", model_name)
 
             # create model
-            model = get_model(model_name)
-
-            # create pipeline
-            pipeline = get_pipeline(model, memory="/tmp/")
-            logging.info(f"pipeline with {model_name} created")
-
-            print(pipeline.get_params().keys())
+            self.network = get_model(model_name)
 
             # compling model and callbacks functions
             adam = Adam(lr=0.05, epsilon=0.1)
 
-            model.compile(optimizer=adam, loss=focal_tversky, metrics=[tversky])
+            self.network.compile(optimizer=adam,
+                                 loss=focal_tversky,
+                                 metrics=[tversky])
             # callbacks
-            earlystopping = EarlyStopping(
-                monitor="val_loss", mode="min", verbose=1, patience=30
-            )
+            earlystopping = EarlyStopping(monitor="val_loss",
+                                          mode="min",
+                                          verbose=1,
+                                          patience=30)
             # save the best model with lower validation loss
-            checkpointer = ModelCheckpoint(
-                filepath="seg_model.h5", verbose=1, save_best_only=True
-            )
+            checkpointer = ModelCheckpoint(filepath="seg_model.h5",
+                                           verbose=1,
+                                           save_best_only=True)
+
             reduce_lr = ReduceLROnPlateau(
                 monitor="val_loss",
                 mode="min",
@@ -138,10 +145,12 @@ class Trainer(MLFlowBase):
             #    self.mlflow_log_param('best__' + k, v)
 
             # push metrics to mlflow
-            self.mlflow_log_metric("loss", history.history["loss"])
-            self.mlflow_log_metric("val_loss", history.history["val_loss"])
-            self.mlflow_log_metric("tversky", history.history["tversky"])
-            self.mlflow_log_metric("val_tversky", history.history["val_tversky"])
+            self.mlflow_log_metric("loss", self.history.history["loss"])
+            self.mlflow_log_metric("val_loss",
+                                   self.history.history["val_loss"])
+            self.mlflow_log_metric("tversky", self.history.history["tversky"])
+            self.mlflow_log_metric("val_tversky",
+                                   self.history.history["val_tversky"])
 
             # return the gridsearch in order to identify the best estimators and params
 
