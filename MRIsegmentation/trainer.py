@@ -23,13 +23,13 @@ from MRIsegmentation.utils import (
 )
 
 
-def save_model(best_model, model_name):
-    save_model(best_model, f"best_{model_name}.h5")
+def save_model(best_model: Model, model_name: str):
+    best_model.save(f"best_{model_name}.h5")
 
-    client = storage.Client()
-    bucket = client.bucket(BUCKET_NAME)
-    blob = bucket.blob("models/" + f"best_{model_name}.h5")
-    blob.upload_from_filename(f"best_{model_name}.h5")
+    # client = storage.Client()
+    # bucket = client.bucket(BUCKET_NAME)
+    # blob = bucket.blob("models/" + f"best_{model_name}.h5")
+    # blob.upload_from_filename(f"best_{model_name}.h5")
 
 
 def load_model(model_name):
