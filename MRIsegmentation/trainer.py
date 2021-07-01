@@ -126,7 +126,7 @@ class Trainer(MLFlowBase):
 
             history = model.fit(
                 ds_train,
-                epochs=60,
+                epochs=100,
                 callbacks=[checkpointer, earlystopping, reduce_lr],
                 validation_data=ds_val,
             )
@@ -150,7 +150,6 @@ class Trainer(MLFlowBase):
         return (f"goto {MLFLOW_URI}/#/experiments/{self.mlflow_experiment_id}", history)
 
     def predict(self, model_name="vgg19"):
-        print(model_name)
         model: Model = load_model(model_name)
         return model.predict(
             self.ds_test.map(process_path).map(normalize), batch_size=16
