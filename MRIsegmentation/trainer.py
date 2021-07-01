@@ -179,6 +179,7 @@ class Trainer(MLFlowBase):
                 "tversky_loss": tversky_loss,
             },
         )
+        print(self.ds_test, model)
         return model.evaluate(
             self.ds_test.map(process_path).map(normalize), batch_size=16
         )
