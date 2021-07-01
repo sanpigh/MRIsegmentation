@@ -12,6 +12,9 @@ from tensorflow.keras.callbacks import (
 )
 from tensorflow.keras.optimizers import Adam
 
+from tensorboard.plugins.hparams import api as hp
+
+
 from MRIsegmentation.data import get_data, get_data_from_drive, holdout
 from MRIsegmentation.params import BUCKET_NAME, EXPERIMENT_NAME, MLFLOW_URI
 from MRIsegmentation.pipeline import get_pipeline
@@ -36,20 +39,12 @@ def save_model(best_model: Model, model_name: str):
 
 
 def load_model(model_name):
-    print("--- ", model_name)
-    client = storage.Client()
-    bucket = client.bucket(BUCKET_NAME)
-    blob = bucket.blob("models/" + f"best_{model_name}.h5")
-    blob.download_to_filename(f"best_{model_name}.h5")
+    # client = storage.Client()
+    # bucket = client.bucket(BUCKET_NAME)
+    # blob = bucket.blob("models/" + f"best_{model_name}.h5")
+    # blob.download_to_filename(f"best_{model_name}.h5")
 
-    return load_model(
-        f"best_{model_name}.h5",
-        custom_objects={
-            "focal_tversky": focal_tversky,
-            "tversky": tversky,
-            "tversky_loss": tversky_loss,
-        },
-    )
+    return tensorflow.keras.models.load_model(f"best_{model_name}.h5")
 
 
 class Trainer(MLFlowBase):
@@ -90,7 +85,7 @@ class Trainer(MLFlowBase):
             model = get_model(model_name)
 
             # compling model and callbacks functions
-            adam = Adam(learning_rate=0.05, epsilon=0.1)
+            adam = Adam(learning_rate=hyper_params["learning_rate"], epsilon=0.1)
 
             model.compile(optimizer=adam, loss=focal_tversky, metrics=[tversky])
 
@@ -114,6 +109,12 @@ class Trainer(MLFlowBase):
                 factor=0.2,
             )
 
+            # Tensorboard
+            tensorboard = TensorBoard("logs/hparam_tuning")
+
+            #
+            hyper_p = hp.KerasCallback("logs/hparam_tuning", hyper_params)
+
             batch_size = 16
             ds_train = (
                 self.ds_train.map(process_path, num_parallel_calls=AUTOTUNE)
@@ -132,7 +133,13 @@ class Trainer(MLFlowBase):
             history = model.fit(
                 ds_train,
                 epochs=100,
-                callbacks=[checkpointer, earlystopping, reduce_lr],
+                callbacks=[
+                    checkpointer,
+                    earlystopping,
+                    reduce_lr,
+                    tensorboard,
+                    hyper_p,
+                ],
                 validation_data=ds_val,
             )
 
