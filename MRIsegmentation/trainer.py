@@ -138,7 +138,7 @@ class Trainer(MLFlowBase):
 
             # return the gridsearch in order to identify the best estimators and params
 
-        return f"goto {MLFLOW_URI}/#/experiments/{self.mlflow_experiment_id}"
+        return (f"goto {MLFLOW_URI}/#/experiments/{self.mlflow_experiment_id}", history)
 
     def predict(self, df, model_name="vgg19"):
         print(model_name)
