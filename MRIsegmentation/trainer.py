@@ -84,7 +84,7 @@ class Trainer(MLFlowBase):
             model = get_model(model_name)
 
             # compling model and callbacks functions
-            adam = Adam(lr=0.05, epsilon=0.1)
+            adam = Adam(learning_rate=0.05, epsilon=0.1)
 
             model.compile(optimizer=adam, loss=focal_tversky, metrics=[tversky])
 
@@ -112,6 +112,8 @@ class Trainer(MLFlowBase):
             ds_train = (
                 ds_train.map(process_path).map(normalize).batch(batch_size=batch_size)
             )
+
+            ds_val = ds_val.map(process_path).map(normalize)
 
             history = model.fit(
                 ds_train,
