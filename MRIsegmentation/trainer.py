@@ -53,6 +53,9 @@ class Trainer(MLFlowBase):
     def __init__(self):
         super().__init__(EXPERIMENT_NAME, MLFLOW_URI)
         logging.basicConfig(level=logging.INFO)
+        self.ds_train = None
+        self.ds_val = None
+        self.ds_test = None
 
     def train(self, params):
         # iterate on models
@@ -75,7 +78,7 @@ class Trainer(MLFlowBase):
             logging.info(f"Data loaded: {df.shape}")
 
             # holdout
-            ds_train, ds_val, ds_test = holdout(df)
+            self.ds_train, self.ds_val, self.ds_test = holdout(df)
 
             # log params
             logging.info(f"Loading model: {model_name}")
@@ -110,11 +113,15 @@ class Trainer(MLFlowBase):
 
             batch_size = 16
             ds_train = (
-                ds_train.map(process_path).map(normalize).batch(batch_size=batch_size)
+                self.ds_train.map(process_path)
+                .map(normalize)
+                .batch(batch_size=batch_size)
             )
 
             ds_val = (
-                ds_val.map(process_path).map(normalize).batch(batch_size=batch_size)
+                self.ds_val.map(process_path)
+                .map(normalize)
+                .batch(batch_size=batch_size)
             )
 
             history = model.fit(
@@ -142,10 +149,12 @@ class Trainer(MLFlowBase):
 
         return (f"goto {MLFLOW_URI}/#/experiments/{self.mlflow_experiment_id}", history)
 
-    def predict(self, df, model_name="vgg19"):
+    def predict(self, model_name="vgg19"):
         print(model_name)
-        model = load_model(model_name)
-        return model.predict(df)
+        model: Model = load_model(model_name)
+        return model.predict(
+            self.ds_test.map(process_path).map(normalize), batch_size=16
+        )
 
 
 if __name__ == "__main__":
