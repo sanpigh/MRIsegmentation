@@ -79,4 +79,4 @@ def process_path(mri_path, mask_path):
 
 
 def normalize(image, mask):
-    return image / 255, mask / 255
+    return tf.math.divide(image, 255), tf.math.divide(mask, 255)
