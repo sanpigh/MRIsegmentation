@@ -38,13 +38,13 @@ def save_model(best_model: Model, model_name: str):
     # blob.upload_from_filename(f"best_{model_name}.h5")
 
 
-def load_model(model_name):
+def load_model_(model_name):
     # client = storage.Client()
     # bucket = client.bucket(BUCKET_NAME)
     # blob = bucket.blob("models/" + f"best_{model_name}.h5")
     # blob.download_to_filename(f"best_{model_name}.h5")
 
-    return tensorflow.keras.models.load_model(f"best_{model_name}.h5")
+    return load_model(f"best_{model_name}.h5")
 
 
 class Trainer(MLFlowBase):
