@@ -118,7 +118,7 @@ class Trainer(MLFlowBase):
             ds_train = (
                 self.ds_train.map(process_path, num_parallel_calls=AUTOTUNE)
                 .map(normalize, num_parallel_calls=AUTOTUNE)
-                .shuffle(cardinality(ds_train))
+                .shuffle(cardinality(self.ds_train))
                 .batch(batch_size=batch_size)
                 .prefetch(2)
             )
