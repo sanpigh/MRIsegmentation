@@ -29,9 +29,9 @@ from MRIsegmentation.utils import (
 )
 
 
-def save_model(best_model: Model, model_name: str):
-    best_model.save(
-        f"best_{model_name}.h5",
+def save_model(model: Model, model_name: str):
+    model.save(
+        f"best_{model_name}.tf",
     )
 
     # client = storage.Client()
@@ -47,7 +47,7 @@ def load_model_(model_name):
     # blob.download_to_filename(f"best_{model_name}.h5")
 
     return load_model(
-        f"best_{model_name}.h5",
+        f"best_{model_name}.tf",
         custom_objects={
             "focal_tversky": focal_tversky,
             "tversky": tversky,
