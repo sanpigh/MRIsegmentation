@@ -90,7 +90,7 @@ class Trainer(MLFlowBase):
 
             # callbacks
             earlystopping = EarlyStopping(
-                monitor="tversky_loss", mode="min", verbose=1, patience=30
+                monitor="val_loss", mode="min", verbose=1, patience=30
             )
 
             # save the best model with lower validation loss
@@ -100,7 +100,7 @@ class Trainer(MLFlowBase):
 
             # reduce learning rate when on a plateau
             reduce_lr = ReduceLROnPlateau(
-                monitor="tversky_loss",
+                monitor="val_loss",
                 mode="min",
                 verbose=1,
                 patience=10,
@@ -134,9 +134,9 @@ class Trainer(MLFlowBase):
 
             # push metrics to mlflow
             self.mlflow_log_metric("loss", history.history["loss"][-1])
-            # self.mlflow_log_metric("val_loss", history.history["val_loss"])
+            self.mlflow_log_metric("val_loss", history.history["val_loss"][-1])
             self.mlflow_log_metric("tversky", history.history["tversky"][-1])
-            # self.mlflow_log_metric("val_tversky", history.history["val_tversky"])
+            self.mlflow_log_metric("val_tversky", history.history["val_tversky"][-1])
 
             # return the gridsearch in order to identify the best estimators and params
 
