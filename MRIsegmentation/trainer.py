@@ -23,13 +23,13 @@ from MRIsegmentation.utils import (
 )
 
 
-def save_model(best_model, model_name):
-    save_model(best_model, f"best_{model_name}.h5")
+def save_model(best_model: Model, model_name: str):
+    best_model.save(f"best_{model_name}.h5")
 
-    client = storage.Client()
-    bucket = client.bucket(BUCKET_NAME)
-    blob = bucket.blob("models/" + f"best_{model_name}.h5")
-    blob.upload_from_filename(f"best_{model_name}.h5")
+    # client = storage.Client()
+    # bucket = client.bucket(BUCKET_NAME)
+    # blob = bucket.blob("models/" + f"best_{model_name}.h5")
+    # blob.upload_from_filename(f"best_{model_name}.h5")
 
 
 def load_model(model_name):
@@ -84,13 +84,13 @@ class Trainer(MLFlowBase):
             model = get_model(model_name)
 
             # compling model and callbacks functions
-            adam = Adam(lr=0.05, epsilon=0.1)
+            adam = Adam(learning_rate=0.05, epsilon=0.1)
 
             model.compile(optimizer=adam, loss=focal_tversky, metrics=[tversky])
 
             # callbacks
             earlystopping = EarlyStopping(
-                monitor="tversky_loss", mode="min", verbose=1, patience=30
+                monitor="val_loss", mode="min", verbose=1, patience=30
             )
 
             # save the best model with lower validation loss
@@ -100,7 +100,7 @@ class Trainer(MLFlowBase):
 
             # reduce learning rate when on a plateau
             reduce_lr = ReduceLROnPlateau(
-                monitor="tversky_loss",
+                monitor="val_loss",
                 mode="min",
                 verbose=1,
                 patience=10,
@@ -111,6 +111,10 @@ class Trainer(MLFlowBase):
             batch_size = 16
             ds_train = (
                 ds_train.map(process_path).map(normalize).batch(batch_size=batch_size)
+            )
+
+            ds_val = (
+                ds_val.map(process_path).map(normalize).batch(batch_size=batch_size)
             )
 
             history = model.fit(
@@ -129,14 +133,14 @@ class Trainer(MLFlowBase):
             #    self.mlflow_log_param('best__' + k, v)
 
             # push metrics to mlflow
-            self.mlflow_log_metric("loss", history.history["loss"])
-            self.mlflow_log_metric("val_loss", history.history["val_loss"])
-            self.mlflow_log_metric("tversky", history.history["tversky"])
-            self.mlflow_log_metric("val_tversky", history.history["val_tversky"])
+            self.mlflow_log_metric("loss", history.history["loss"][-1])
+            self.mlflow_log_metric("val_loss", history.history["val_loss"][-1])
+            self.mlflow_log_metric("tversky", history.history["tversky"][-1])
+            self.mlflow_log_metric("val_tversky", history.history["val_tversky"][-1])
 
             # return the gridsearch in order to identify the best estimators and params
 
-        return f"goto {MLFLOW_URI}/#/experiments/{self.mlflow_experiment_id}"
+        return (f"goto {MLFLOW_URI}/#/experiments/{self.mlflow_experiment_id}", history)
 
     def predict(self, df, model_name="vgg19"):
         print(model_name)
