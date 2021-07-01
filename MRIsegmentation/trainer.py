@@ -117,6 +117,7 @@ class Trainer(MLFlowBase):
                 ds_train,
                 epochs=60,
                 callbacks=[checkpointer, earlystopping, reduce_lr],
+                validation_data=ds_val,
             )
 
             # save the trained model
