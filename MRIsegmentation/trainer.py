@@ -161,9 +161,9 @@ class Trainer(MLFlowBase):
 
         return (f"goto {MLFLOW_URI}/#/experiments/{self.mlflow_experiment_id}", history)
 
-    def predict(self, model_name="vgg19"):
+    def evaluate(self, model_name="vgg19"):
         model: Model = load_model(model_name)
-        return model.predict(
+        return model.evaluate(
             self.ds_test.map(process_path).map(normalize), batch_size=16
         )
 
