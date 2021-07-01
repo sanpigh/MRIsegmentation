@@ -1,11 +1,14 @@
 from google.cloud import storage
 import logging
+
+from tensorflow.data.experimental import cardinality, AUTOTUNE
 from tensorflow.keras.models import Model, load_model
 from tensorflow.keras.callbacks import (
     ReduceLROnPlateau,
     EarlyStopping,
     ModelCheckpoint,
     LearningRateScheduler,
+    TensorBoard,
 )
 from tensorflow.keras.optimizers import Adam
 
@@ -113,14 +116,16 @@ class Trainer(MLFlowBase):
 
             batch_size = 16
             ds_train = (
-                self.ds_train.map(process_path)
-                .map(normalize)
+                self.ds_train.map(process_path, num_parallel_calls=AUTOTUNE)
+                .map(normalize, num_parallel_calls=AUTOTUNE)
+                .shuffle(cardinality(ds_train))
                 .batch(batch_size=batch_size)
+                .prefetch(2)
             )
 
             ds_val = (
-                self.ds_val.map(process_path)
-                .map(normalize)
+                self.ds_val.map(process_path, num_parallel_calls=AUTOTUNE)
+                .map(normalize, num_parallel_calls=AUTOTUNE)
                 .batch(batch_size=batch_size)
             )
 
