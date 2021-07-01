@@ -4,6 +4,8 @@ import tensorflow_io as tfio
 from tensorflow.python.ops import io_ops
 from tensorflow_addons.metrics import F1Score
 from tensorflow.keras.metrics import MeanIoU
+import matplotlib as plt
+from skimage import io
 
 
 def tversky(y_true, y_pred, smooth=1):
@@ -50,3 +52,19 @@ def IoU_score(y_true, y_pred):
 def load_scan_and_mask(x, y):
     return (tfio.experimental.image.decode_tiff(io_ops.read_file(x)),
             tfio.experimental.image.decode_tiff(io_ops.read_file(y)))
+
+def dataviz_image_and_mask(tf_dataset, number_of_samples):
+  for image_path, mask_path in tf_dataset.take(number_of_samples):
+    fig,axs = plt.subplots(1,3, figsize=(8,15))
+    
+    image = io.imread(image_path.numpy().decode('ascii'))
+    mask = io.imread(mask_path.numpy().decode('ascii'))
+    axs[0].set_title('Image')
+    axs[0].imshow(image)
+
+    axs[1].set_title('Mask')
+    axs[1].imshow(mask, cmap='gray')
+    
+    axs[2].set_title('MRI with Mask')
+    image[mask==255] = (255, 0, 0)
+    axs[2].imshow(image)
