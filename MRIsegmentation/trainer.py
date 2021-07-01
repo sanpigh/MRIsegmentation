@@ -117,7 +117,7 @@ class Trainer(MLFlowBase):
 
             history = model.fit(
                 ds_train,
-                epochs=60,
+                epochs=10,
                 callbacks=[checkpointer, earlystopping, reduce_lr],
                 # validation_data=ds_val,
             )
