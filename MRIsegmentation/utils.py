@@ -54,17 +54,21 @@ def load_scan_and_mask(x, y):
             tfio.experimental.image.decode_tiff(io_ops.read_file(y)))
 
 def dataviz_image_and_mask(tf_dataset, number_of_samples):
-  for image_path, mask_path in tf_dataset.take(number_of_samples):
-    fig,axs = plt.subplots(1,3, figsize=(8,15))
-    
-    image = io.imread(image_path.numpy().decode('ascii'))
-    mask = io.imread(mask_path.numpy().decode('ascii'))
-    axs[0].set_title('Image')
-    axs[0].imshow(image)
+    '''Import process_path and call the function following the example below: 
+    from MRIsegmentation.utils import process_path
+    dataviz_image_and_mask(ds_train.map(process_path), 5)'''
 
-    axs[1].set_title('Mask')
-    axs[1].imshow(mask, cmap='gray')
-    
-    axs[2].set_title('MRI with Mask')
-    image[mask==255] = (255, 0, 0)
-    axs[2].imshow(image)
+    for image, mask in tf_dataset.take(number_of_samples):
+        fig,axs = plt.subplots(1,3, figsize=(8,15))
+        image = image.numpy()
+        mask = mask.numpy()
+        
+        axs[0].set_title('Image')
+        axs[0].imshow(image)
+
+        axs[1].set_title('Mask')
+        axs[1].imshow(mask, cmap='gray')
+        
+        axs[2].set_title('MRI with Mask')
+        image[mask==255] = (255, 0, 0)
+        axs[2].imshow(image)
