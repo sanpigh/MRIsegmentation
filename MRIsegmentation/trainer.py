@@ -181,7 +181,7 @@ class Trainer(MLFlowBase):
         )
         print(self.ds_test, model)
         return model.evaluate(
-            self.ds_test.map(process_path).map(normalize).batch(batch_size=batch_size)
+            self.ds_test.map(process_path).map(normalize).batch(batch_size=16)
         )
 
 
