@@ -131,10 +131,10 @@ class Trainer(MLFlowBase):
             #    self.mlflow_log_param('best__' + k, v)
 
             # push metrics to mlflow
-            self.mlflow_log_metric("loss", history.history["loss"])
-            self.mlflow_log_metric("val_loss", history.history["val_loss"])
-            self.mlflow_log_metric("tversky", history.history["tversky"])
-            self.mlflow_log_metric("val_tversky", history.history["val_tversky"])
+            self.mlflow_log_metric("loss", history.history["loss"][-1])
+            # self.mlflow_log_metric("val_loss", history.history["val_loss"])
+            self.mlflow_log_metric("tversky", history.history["tversky"][-1])
+            # self.mlflow_log_metric("val_tversky", history.history["val_tversky"])
 
             # return the gridsearch in order to identify the best estimators and params
 
