@@ -113,7 +113,9 @@ class Trainer(MLFlowBase):
                 ds_train.map(process_path).map(normalize).batch(batch_size=batch_size)
             )
 
-            ds_val = ds_val.map(process_path).map(normalize)
+            ds_val = (
+                ds_val.map(process_path).map(normalize).batch(batch_size=batch_size)
+            )
 
             history = model.fit(
                 ds_train,
