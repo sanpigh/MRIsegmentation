@@ -71,12 +71,30 @@ def process_path(mri_path, mask_path):
     mri_img = tfio.experimental.image.decode_tiff(tf.io.read_file(mri_path))
     mri_img = mri_img[:, :, :-1]
     mask_img = tfio.experimental.image.decode_tiff(tf.io.read_file(mask_path))
-    mask_img = mask_img[:, :, 0]
+    mask_img = mask_img[:, :, :-1]
 
     # . for label processisng use tf.strings.[split, substr, to_number]
     # tf.strings.split()
 
     return mri_img, mask_img
+
+
+def flatten_mask(image, mask):
+    """
+    Flatten mask from [H, W, RGB] to [H, W]. Leave image unchanged.
+
+    :image: the image (3 RGB channels)
+    :mask: the mask (3 RGB channels)
+    :return: The image and mask
+    :rtype: [H, W, 3 RGB] array and [H, W] binary array
+    """
+
+    mask = mask[:, :, 0]
+
+    # . for label processing use tf.strings.[split, substr, to_number]
+    # tf.strings.split()
+
+    return image, mask
 
 
 def normalize(image, mask):
@@ -94,35 +112,34 @@ def augment_data(tf_dataset, number_of_samples):
         if tf.random.uniform((), minval=0, maxval=1) <= 0.1:
             image = tf.image.adjust_brightness(image, delta=0.1)
             mask = tf.image.adjust_brightness(mask, delta=0.1)
-            print('brightness')
-            
+            print("brightness")
+
         elif tf.random.uniform((), minval=0, maxval=1) <= 0.2:
             image = tf.image.adjust_contrast(image, contrast_factor=0.1)
             mask = tf.image.adjust_contrast(mask, contrast_factor=0.1)
-            print('contrast')
+            print("contrast")
 
         elif tf.random.uniform((), minval=0, maxval=1) <= 0.4:
             image = tf.image.flip_left_right(image)
             mask = tf.image.flip_left_right(mask)
-            print('flip L/R')
+            print("flip L/R")
 
         elif tf.random.uniform((), minval=0, maxval=1) <= 0.6:
             image = tf.image.flip_up_down(image)
             mask = tf.image.flip_up_down(mask)
-            print('flip up/down')
+            print("flip up/down")
 
         elif tf.random.uniform((), minval=0, maxval=1) <= 0.7:
             image = tfa.image.rotate(image, angles=0.5)
             mask = tfa.image.rotate(mask, angles=0.5)
-            print('rotate')
+            print("rotate")
 
         else:
             image = image
             mask = mask
-            print('no augmentation')
+            print("no augmentation")
 
         return image, mask
-
 
 
 def dataviz_image_and_mask(tf_dataset, number_of_samples):
