@@ -1,6 +1,7 @@
 import tensorflow as tf
 import tensorflow.keras.backend as K
 import tensorflow_io as tfio
+import matplotlib.pyplot as plt
 
 
 def tversky(y_true, y_pred, smooth=1.0e-7, alpha=0.7, beta=0.3):
@@ -80,3 +81,24 @@ def process_path(mri_path, mask_path):
 
 def normalize(image, mask):
     return tf.math.divide(image, 255), tf.math.divide(mask, 255)
+
+
+def dataviz_image_and_mask(tf_dataset, number_of_samples):
+    """Import process_path and call the function following the example below:
+    from MRIsegmentation.utils import process_path
+    dataviz_image_and_mask(ds_train.map(process_path), 5)"""
+
+    for image, mask in tf_dataset.take(number_of_samples):
+        fig, axs = plt.subplots(1, 3, figsize=(8, 15))
+        image = image.numpy()
+        mask = mask.numpy()
+
+        axs[0].set_title("Image")
+        axs[0].imshow(image)
+
+        axs[1].set_title("Mask")
+        axs[1].imshow(mask, cmap="gray")
+
+        axs[2].set_title("MRI with Mask")
+        image[mask == 255] = (255, 0, 0)
+        axs[2].imshow(image)
