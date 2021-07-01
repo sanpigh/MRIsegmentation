@@ -171,7 +171,14 @@ class Trainer(MLFlowBase):
         return (f"goto {MLFLOW_URI}/#/experiments/{self.mlflow_experiment_id}", history)
 
     def evaluate(self, model_name="vgg19"):
-        model: Model = load_model(f"best_{model_name}.h5")
+        model: Model = load_model(
+            f"best_{model_name}.h5",
+            custom_objects={
+                "focal_tversky": focal_tversky,
+                "tversky": tversky,
+                "tversky_loss": tversky_loss,
+            },
+        )
         return model.evaluate(
             self.ds_test.map(process_path).map(normalize), batch_size=16
         )
