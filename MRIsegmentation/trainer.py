@@ -30,7 +30,9 @@ from MRIsegmentation.utils import (
 
 
 def save_model(best_model: Model, model_name: str):
-    best_model.save(f"best_{model_name}.h5")
+    best_model.save(
+        f"best_{model_name}.h5",
+    )
 
     # client = storage.Client()
     # bucket = client.bucket(BUCKET_NAME)
@@ -44,7 +46,14 @@ def load_model_(model_name):
     # blob = bucket.blob("models/" + f"best_{model_name}.h5")
     # blob.download_to_filename(f"best_{model_name}.h5")
 
-    return load_model(f"best_{model_name}.h5")
+    return load_model(
+        f"best_{model_name}.h5",
+        custom_objects={
+            "focal_tversky": focal_tversky,
+            "tversky": tversky,
+            "tversky_loss": tversky_loss,
+        },
+    )
 
 
 class Trainer(MLFlowBase):
