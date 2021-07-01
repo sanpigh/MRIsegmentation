@@ -112,10 +112,10 @@ class Trainer(MLFlowBase):
             # Tensorboard
             tensorboard = TensorBoard("logs/hparam_tuning")
 
-            #
+            # Hyper parameters logging
             hyper_p = hp.KerasCallback("logs/hparam_tuning", hyper_params)
 
-            batch_size = 16
+            batch_size = hyper_params["batch_size"]
             ds_train = (
                 self.ds_train.map(process_path, num_parallel_calls=AUTOTUNE)
                 .map(normalize, num_parallel_calls=AUTOTUNE)
@@ -132,7 +132,7 @@ class Trainer(MLFlowBase):
 
             history = model.fit(
                 ds_train,
-                epochs=100,
+                epochs=hyper_params["epochs"],
                 callbacks=[
                     checkpointer,
                     earlystopping,
