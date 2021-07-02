@@ -83,45 +83,40 @@ def normalize(image, mask):
     return tf.math.divide(image, 255), tf.math.divide(mask, 255)
 
 
-def augment_data(tf_dataset, number_of_samples):
-
-    for image, mask in tf_dataset.take(number_of_samples):
-        image = tfio.experimental.image.decode_tiff(tf.io.read_file(image))
-        image = image[:, :, :-1]
-        mask = tfio.experimental.image.decode_tiff(tf.io.read_file(mask))
-        mask = mask[:, :, :-1]
-
-        if tf.random.uniform((), minval=0, maxval=1) <= 0.1:
-            image = tf.image.adjust_brightness(image, delta=0.1)
-            mask = tf.image.adjust_brightness(mask, delta=0.1)
-            print('brightness')
-            
-        elif tf.random.uniform((), minval=0, maxval=1) <= 0.2:
-            image = tf.image.adjust_contrast(image, contrast_factor=0.1)
-            mask = tf.image.adjust_contrast(mask, contrast_factor=0.1)
-            print('contrast')
-
-        elif tf.random.uniform((), minval=0, maxval=1) <= 0.4:
-            image = tf.image.flip_left_right(image)
-            mask = tf.image.flip_left_right(mask)
-            print('flip L/R')
-
-        elif tf.random.uniform((), minval=0, maxval=1) <= 0.6:
-            image = tf.image.flip_up_down(image)
-            mask = tf.image.flip_up_down(mask)
-            print('flip up/down')
-
-        elif tf.random.uniform((), minval=0, maxval=1) <= 0.7:
-            image = tfa.image.rotate(image, angles=0.5)
-            mask = tfa.image.rotate(mask, angles=0.5)
-            print('rotate')
-
-        else:
-            image = image
-            mask = mask
-            print('no augmentation')
-
-        return image, mask
+def augment_data(image, mask):
+    
+    if tf.random.uniform((), minval=0, maxval=1) <= 0.14:
+        delta_val = tf.random.uniform((), minval=-0.5, maxval=0.5)
+        image = tf.image.adjust_brightness(image, delta=0.1)
+        mask = tf.image.adjust_brightness(mask, delta=0.1)
+        
+    elif tf.random.uniform((), minval=0, maxval=1) <= 0.28:
+        image = tf.image.adjust_contrast(image, contrast_factor=0.1)
+        mask = tf.image.adjust_contrast(mask, contrast_factor=0.1)
+        
+    elif tf.random.uniform((), minval=0, maxval=1) <= 0.42:
+        image = tf.image.flip_left_right(image)
+        mask = tf.image.flip_left_right(mask)
+        
+    elif tf.random.uniform((), minval=0, maxval=1) <= 0.56:
+        image = tf.image.flip_up_down(image)
+        mask = tf.image.flip_up_down(mask)
+        
+    elif tf.random.uniform((), minval=0, maxval=1) <= 0.70:
+        angle = tf.random.uniform((), minval=-0.5, maxval=0.5)
+        image = tfa.image.rotate(image, angles=angle)
+        mask = tfa.image.rotate(mask, angles=angle)
+        
+    elif tf.random.uniform((), minval=0, maxval=1) <= 0.84:
+        crop_val = tf.random.uniform((), minval=0.8, maxval=0.9)
+        image = tf.image.central_crop(image, central_fraction=crop_val)
+        mask = tf.image.central_crop(mask, central_fraction=crop_val)
+        
+    else:
+        image = image
+        mask = mask
+        
+    return image, mask
 
 
 
