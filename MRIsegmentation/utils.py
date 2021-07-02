@@ -2,6 +2,7 @@ import tensorflow as tf
 import tensorflow.keras.backend as K
 import tensorflow_io as tfio
 import matplotlib.pyplot as plt
+import tensorflow.addons as tfa
 
 
 def tversky(y_true, y_pred, smooth=1.0e-7, alpha=0.7, beta=0.3):
@@ -126,8 +127,8 @@ def augment_data(image, mask):
 
     elif tf.random.uniform((), minval=0, maxval=1) <= 0.70:
         angle = tf.random.uniform((), minval=-0.5, maxval=0.5)
-        image = tf.image.rotate(image, angles=angle)
-        mask = tf.image.rotate(mask, angles=angle)
+        image = tfa.image.rotate(image, angles=angle)
+        mask = tfa.image.rotate(mask, angles=angle)
 
     elif tf.random.uniform((), minval=0, maxval=1) <= 0.84:
         crop_val = tf.random.uniform((), minval=0.8, maxval=0.9)
