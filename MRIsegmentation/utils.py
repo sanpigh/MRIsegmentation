@@ -1,6 +1,7 @@
 import tensorflow as tf
 import tensorflow.keras.backend as K
 import tensorflow_io as tfio
+import tensorflow_addons as tfa
 import matplotlib.pyplot as plt
 
 
@@ -71,7 +72,7 @@ def process_path(mri_path, mask_path):
     mri_img = tfio.experimental.image.decode_tiff(tf.io.read_file(mri_path))
     mri_img = mri_img[:, :, :-1]
     mask_img = tfio.experimental.image.decode_tiff(tf.io.read_file(mask_path))
-    mask_img = mask_img[:, :, 0]
+    mask_img = mask_img[:, :, :-1]
 
     # . for label processisng use tf.strings.[split, substr, to_number]
     # tf.strings.split()
@@ -80,6 +81,8 @@ def process_path(mri_path, mask_path):
 
 
 def normalize(image, mask):
+    # image = tf.cast(image, tf.float32) / 255.
+
     return tf.math.divide(image, 255), tf.math.divide(mask, 255)
 
 
