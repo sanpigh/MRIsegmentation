@@ -113,37 +113,37 @@ def augment_data(image, mask):
     Return image and mask
     """
     choice = tf.random.uniform((), minval=0, maxval=1)
-    if False and choice < 0.5:
+    if True and choice < 0.5:
         delta_val = tf.random.uniform((), minval=-0.5, maxval=0.5)
         image = tf.image.adjust_brightness(image, delta=delta_val)
         return image, mask
 
     choice = tf.random.uniform((), minval=0, maxval=1)
-    if False and choice < 0.5:
+    if True and choice < 0.5:
         image = tf.image.adjust_contrast(image, contrast_factor=0.1)
         return image, mask
 
     choice = tf.random.uniform((), minval=0, maxval=1)
-    if False and choice < 0.5:
+    if True and choice < 0.5:
         image = tf.image.flip_left_right(image)
         mask = tf.image.flip_left_right(mask)
         return image, mask
 
     choice = tf.random.uniform((), minval=0, maxval=1)
-    if False and choice < 0.5:
+    if True and choice < 0.5:
         image = tf.image.flip_up_down(image)
         mask = tf.image.flip_up_down(mask)
         return image, mask
 
     choice = tf.random.uniform((), minval=0, maxval=1)
-    if choice < 0.5:
+    if True and choice < 0.5:
         angle = tf.random.uniform((), minval=-0.5, maxval=0.5)
         image = tfa.image.rotate(image, angles=angle)
         mask = tfa.image.rotate(mask, angles=angle)
         return image, mask
 
     choice = tf.random.uniform((), minval=0, maxval=1)
-    if choice < 0.5:
+    if False and choice < 0.5:
         crop_val = tf.random.uniform((), minval=0.8, maxval=0.9)
         image = tf.image.central_crop(image, central_fraction=crop_val)
         mask = tf.image.central_crop(mask, central_fraction=crop_val)
