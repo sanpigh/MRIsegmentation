@@ -71,7 +71,7 @@ def process_path(mri_path, mask_path):
     mri_img = tfio.experimental.image.decode_tiff(tf.io.read_file(mri_path))
     mri_img = mri_img[:, :, :-1]
     mask_img = tfio.experimental.image.decode_tiff(tf.io.read_file(mask_path))
-    mask_img = mask_img[:, :, -1]
+    mask_img = mask_img[:, :, :-1]
 
     # . for label processisng use tf.strings.[split, substr, to_number]
     # tf.strings.split()
