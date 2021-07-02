@@ -124,10 +124,13 @@ class Trainer(MLFlowBase):
             hyper_p = hp.KerasCallback("logs/hparam_tuning", hyper_params)
 
             batch_size = hyper_params["batch_size"]
+
+            cardinality = ds_train.cardinality()
+
             ds_train = (
                 self.ds_train.map(process_path, num_parallel_calls=tf.data.AUTOTUNE)
                 .map(normalize, num_parallel_calls=tf.data.AUTOTUNE)
-                .shuffle(ds_train.cardinality())
+                .shuffle(cardinality)
                 .batch(batch_size=batch_size)
                 .prefetch(2)
             )
