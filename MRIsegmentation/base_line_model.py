@@ -56,14 +56,14 @@ def base_line_model_retrieve():
     # RETRIEVE DATA
     df = get_data_from_drive()
     # Create X_train and y_train from images and masks
-    X_train   = []
-    y_train   = []
+    X = []
+    y = []
 
     for index, row in df.iloc[0:100].iterrows():
         X.append(plt.imread(row['image_path']))
         y.append(plt.imread(row['mask_path']))
 
-    X_train_tensor = tf.convert_to_tensor(X_train, dtype=tf.float32)
-    y_train_tensor = tf.convert_to_tensor(y_train, dtype=tf.float32)
+    X_tensor = tf.convert_to_tensor(X, dtype=tf.float32)
+    y_tensor = tf.convert_to_tensor(y, dtype=tf.float32)
 
-    return X_train_tensor, y_train_tensor
+    return X_tensor, y_tensor
