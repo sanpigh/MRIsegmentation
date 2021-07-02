@@ -1,15 +1,21 @@
 from google.cloud import storage
 import logging
+
+import tensorflow as tf
 from tensorflow.keras.models import Model, load_model
 from tensorflow.keras.callbacks import (
     ReduceLROnPlateau,
     EarlyStopping,
     ModelCheckpoint,
     LearningRateScheduler,
+    TensorBoard,
 )
 from tensorflow.keras.optimizers import Adam
 
-from MRIsegmentation.data import get_data, get_data_from_drive, holdout
+from tensorboard.plugins.hparams import api as hp
+
+
+from MRIsegmentation.data import get_data_from_drive, holdout
 from MRIsegmentation.params import BUCKET_NAME, EXPERIMENT_NAME, MLFLOW_URI
 from MRIsegmentation.pipeline import get_pipeline
 from MRIsegmentation.model import get_model
@@ -19,12 +25,16 @@ from MRIsegmentation.utils import (
     tversky,
     tversky_loss,
     process_path,
+    augment_data,
+    flatten_mask,
     normalize,
 )
 
 
-def save_model(best_model: Model, model_name: str):
-    best_model.save(f"best_{model_name}.h5")
+def save_model(model: Model, model_name: str):
+    model.save(
+        f"best_{model_name}.tf",
+    )
 
     # client = storage.Client()
     # bucket = client.bucket(BUCKET_NAME)
@@ -32,15 +42,14 @@ def save_model(best_model: Model, model_name: str):
     # blob.upload_from_filename(f"best_{model_name}.h5")
 
 
-def load_model(model_name):
-    print("--- ", model_name)
-    client = storage.Client()
-    bucket = client.bucket(BUCKET_NAME)
-    blob = bucket.blob("models/" + f"best_{model_name}.h5")
-    blob.download_to_filename(f"best_{model_name}.h5")
+def load_model_(model_name):
+    # client = storage.Client()
+    # bucket = client.bucket(BUCKET_NAME)
+    # blob = bucket.blob("models/" + f"best_{model_name}.h5")
+    # blob.download_to_filename(f"best_{model_name}.h5")
 
     return load_model(
-        f"best_{model_name}.h5",
+        f"best_{model_name}.tf",
         custom_objects={
             "focal_tversky": focal_tversky,
             "tversky": tversky,
@@ -53,12 +62,15 @@ class Trainer(MLFlowBase):
     def __init__(self):
         super().__init__(EXPERIMENT_NAME, MLFLOW_URI)
         logging.basicConfig(level=logging.INFO)
+        self.ds_train = None
+        self.ds_val = None
+        self.ds_test = None
+        self.model = None
 
     def train(self, params):
         # iterate on models
         for model_name, model_params in params.items():
 
-            line_count = model_params["line_count"]
             hyper_params = model_params["hyper_params"]
 
             # create a mlflow training
@@ -66,16 +78,15 @@ class Trainer(MLFlowBase):
 
             # log params
             self.mlflow_log_param("model_name", model_name)
-            self.mlflow_log_param("line_count", line_count)
             for key, value in hyper_params.items():
                 self.mlflow_log_param(key, value)
 
-            # get data
+            # get data frm drive
             df = get_data_from_drive()
             logging.info(f"Data loaded: {df.shape}")
 
             # holdout
-            ds_train, ds_val, ds_test = holdout(df)
+            self.ds_train, self.ds_val, self.ds_test = holdout(df)
 
             # log params
             logging.info(f"Loading model: {model_name}")
@@ -84,7 +95,7 @@ class Trainer(MLFlowBase):
             model = get_model(model_name)
 
             # compling model and callbacks functions
-            adam = Adam(learning_rate=0.05, epsilon=0.1)
+            adam = Adam(learning_rate=hyper_params["learning_rate"], epsilon=0.1)
 
             model.compile(optimizer=adam, loss=focal_tversky, metrics=[tversky])
 
@@ -108,25 +119,50 @@ class Trainer(MLFlowBase):
                 factor=0.2,
             )
 
-            batch_size = 16
+            # Tensorboard
+            tensorboard = TensorBoard("logs/hparam_tuning")
+
+            # Hyper parameters logging
+            hyper_p = hp.KerasCallback("logs/hparam_tuning", hyper_params)
+
+            batch_size = hyper_params["batch_size"]
+
+            cardinality = df.shape[0]
+
             ds_train = (
-                ds_train.map(process_path).map(normalize).batch(batch_size=batch_size)
+                self.ds_train.map(process_path, num_parallel_calls=tf.data.AUTOTUNE)
+                # .map(augment_data, num_parallel_calls=tf.data.AUTOTUNE)
+                .map(flatten_mask, num_parallel_calls=tf.data.AUTOTUNE)
+                .map(normalize, num_parallel_calls=tf.data.AUTOTUNE)
+                .shuffle(cardinality)
+                .batch(batch_size=batch_size)
+                .prefetch(2)
             )
 
             ds_val = (
-                ds_val.map(process_path).map(normalize).batch(batch_size=batch_size)
+                self.ds_val.map(process_path, num_parallel_calls=tf.data.AUTOTUNE)
+                .map(normalize, num_parallel_calls=tf.data.AUTOTUNE)
+                .batch(batch_size=batch_size)
             )
 
             history = model.fit(
                 ds_train,
-                epochs=60,
-                callbacks=[checkpointer, earlystopping, reduce_lr],
+                epochs=hyper_params["epochs"],
+                callbacks=[
+                    checkpointer,
+                    earlystopping,
+                    reduce_lr,
+                    tensorboard,
+                    hyper_p,
+                ],
                 validation_data=ds_val,
             )
 
             # save the trained model
             save_model(model, model_name)
             logging.info(f"best {model_name} saved")
+
+            self.model = model
 
             # push best params & score to mlflow
             # for k, v in grid_search.best_params_.items():
@@ -142,15 +178,26 @@ class Trainer(MLFlowBase):
 
         return (f"goto {MLFLOW_URI}/#/experiments/{self.mlflow_experiment_id}", history)
 
-    def predict(self, df, model_name="vgg19"):
-        print(model_name)
-        model = load_model(model_name)
-        return model.predict(df)
+    def evaluate(self, model_name="vgg19"):
+        model: Model = load_model(
+            f"best_{model_name}.tf",
+            custom_objects={
+                "focal_tversky": focal_tversky,
+                "tversky": tversky,
+                "tversky_loss": tversky_loss,
+            },
+        )
+        return self.model.evaluate(
+            self.ds_test.map(process_path).map(normalize).batch(batch_size=16)
+        )
+
+    def predict(self, image):
+        return self.model.predict(image)
 
 
 if __name__ == "__main__":
     # Define parameters to be evaluated
-    params = dict(vgg19=dict(line_count=1_000, hyper_params=dict()))
+    params = dict(vgg19=dict(hyper_params=dict()))
 
     # Run a trainer
     trainer = Trainer()
