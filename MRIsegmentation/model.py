@@ -7,7 +7,7 @@ from tensorflow.keras.layers import (
     Concatenate,
     Input,
 )
-from tensorflow.keras.applications import VGG19, ResNet50V2
+from tensorflow.keras.applications import VGG19
 from tensorflow.keras.models import Model
 
 
@@ -51,30 +51,6 @@ def build_vgg19_unet(input_shape):
     outputs = Conv2D(1, 1, padding="same", activation="sigmoid")(d4)
 
     model = Model(inputs, outputs, name="VGG19_U-Net")
-    return model
-
-
-def build_resnet50v2_unet(input_shape):
-    """Input"""
-    inputs = Input(input_shape)
-    """ Pre-trained VGG19 Model """
-    resnet50v2 = ResNet50V2(include_top=False, weights="imagenet", input_tensor=inputs)
-    """ Encoder """
-    s1 = resnet50v2.get_layer("block1_conv2").output
-    s2 = resnet50v2.get_layer("block2_conv2").output
-    s3 = resnet50v2.get_layer("block3_conv4").output
-    s4 = resnet50v2.get_layer("block4_conv4").output
-    """ Bridge """
-    b1 = resnet50v2.get_layer("block5_conv4").output
-    """ Decoder """
-    d1 = decoder_block(b1, s4, 512)
-    d2 = decoder_block(d1, s3, 256)
-    d3 = decoder_block(d2, s2, 128)
-    d4 = decoder_block(d3, s1, 64)
-    """ Output """
-    outputs = Conv2D(1, 1, padding="same", activation="sigmoid")(d4)
-
-    model = Model(inputs, outputs, name="ResNet50V2_U-Net")
     return model
 
 
