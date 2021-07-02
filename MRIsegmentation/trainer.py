@@ -131,7 +131,7 @@ class Trainer(MLFlowBase):
 
             ds_train = (
                 self.ds_train.map(process_path, num_parallel_calls=tf.data.AUTOTUNE)
-                .map(augment_data, num_parallel_calls=tf.data.AUTOTUNE)
+                # .map(augment_data, num_parallel_calls=tf.data.AUTOTUNE)
                 .map(flatten_mask, num_parallel_calls=tf.data.AUTOTUNE)
                 .map(normalize, num_parallel_calls=tf.data.AUTOTUNE)
                 .shuffle(cardinality)
