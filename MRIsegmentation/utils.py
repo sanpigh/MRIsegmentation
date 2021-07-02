@@ -84,7 +84,6 @@ def normalize(image, mask):
 
 
 def augment_data(image, mask):
-    
     if tf.random.uniform((), minval=0, maxval=1) <= 0.14:
         delta_val = tf.random.uniform((), minval=-0.5, maxval=0.5)
         image = tf.image.adjust_brightness(image, delta=0.1)
@@ -117,6 +116,8 @@ def augment_data(image, mask):
         mask = mask
         
     return image, mask
+
+# test
 
 
 def dataviz_image_and_mask(tf_dataset, number_of_samples):
