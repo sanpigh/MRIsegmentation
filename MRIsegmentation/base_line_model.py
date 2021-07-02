@@ -14,8 +14,8 @@ class BaseLineModel():
     def summary(self):
       return f'Baseline model'
   
-    def score(self, X, y_true):
-        y_pred = self.predict(X)
+    def score(self, X, y_true, red_threshold_coef=1.5, green_threshold_coef=1.7, blue_threshold_coef=1.5):
+        y_pred = self.predict(X, red_threshold_coef, green_threshold_coef, blue_threshold_coef)
 #        IoU = IoU_score(y_true, y_pred)
         IoU = tversky(tf.cast(y_true, dtype=tf.float32), tf.cast(y_pred, dtype=tf.float32))
         return IoU
