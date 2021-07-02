@@ -119,7 +119,6 @@ def augment_data(image, mask):
     return image, mask
 
 
-
 def dataviz_image_and_mask(tf_dataset, number_of_samples):
     """Import process_path and call the function following the example below:
     from MRIsegmentation.utils import process_path
