@@ -1,8 +1,8 @@
 import tensorflow as tf
 import tensorflow.keras.backend as K
 import tensorflow_io as tfio
+import tensorflow_addons as tfa
 import matplotlib.pyplot as plt
-import tensorflow.addons as tfa
 
 
 def tversky(y_true, y_pred, smooth=1.0e-7, alpha=0.7, beta=0.3):
