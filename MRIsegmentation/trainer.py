@@ -1,7 +1,7 @@
 from google.cloud import storage
 import logging
 
-from tensorflow.data.experimental import cardinality, AUTOTUNE
+import tensorflow as tf
 from tensorflow.keras.models import Model, load_model
 from tensorflow.keras.callbacks import (
     ReduceLROnPlateau,
@@ -125,16 +125,16 @@ class Trainer(MLFlowBase):
 
             batch_size = hyper_params["batch_size"]
             ds_train = (
-                self.ds_train.map(process_path, num_parallel_calls=AUTOTUNE)
-                .map(normalize, num_parallel_calls=AUTOTUNE)
-                .shuffle(cardinality(self.ds_train))
+                self.ds_train.map(process_path, num_parallel_calls=tf.data.AUTOTUNE)
+                .map(normalize, num_parallel_calls=tf.data.AUTOTUNE)
+                .shuffle(ds_train.cardinality())
                 .batch(batch_size=batch_size)
                 .prefetch(2)
             )
 
             ds_val = (
-                self.ds_val.map(process_path, num_parallel_calls=AUTOTUNE)
-                .map(normalize, num_parallel_calls=AUTOTUNE)
+                self.ds_val.map(process_path, num_parallel_calls=tf.data.AUTOTUNE)
+                .map(normalize, num_parallel_calls=tf.data.AUTOTUNE)
                 .batch(batch_size=batch_size)
             )
 
@@ -183,6 +183,9 @@ class Trainer(MLFlowBase):
         return self.model.evaluate(
             self.ds_test.map(process_path).map(normalize).batch(batch_size=16)
         )
+
+    def predict(self, image):
+        return self.model.predict(image)
 
 
 if __name__ == "__main__":
