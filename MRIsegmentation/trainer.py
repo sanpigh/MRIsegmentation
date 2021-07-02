@@ -173,7 +173,7 @@ class Trainer(MLFlowBase):
 
     def evaluate(self, model_name="vgg19"):
         model: Model = load_model(
-            f"best_{model_name}.h5",
+            f"best_{model_name}.tf",
             custom_objects={
                 "focal_tversky": focal_tversky,
                 "tversky": tversky,
