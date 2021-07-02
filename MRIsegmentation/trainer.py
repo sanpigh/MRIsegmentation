@@ -15,7 +15,7 @@ from tensorflow.keras.optimizers import Adam
 from tensorboard.plugins.hparams import api as hp
 
 
-from MRIsegmentation.data import get_data, get_data_from_drive, holdout
+from MRIsegmentation.data import get_data_from_drive, holdout
 from MRIsegmentation.params import BUCKET_NAME, EXPERIMENT_NAME, MLFLOW_URI
 from MRIsegmentation.pipeline import get_pipeline
 from MRIsegmentation.model import get_model
@@ -25,6 +25,8 @@ from MRIsegmentation.utils import (
     tversky,
     tversky_loss,
     process_path,
+    augment_data,
+    flatten_mask,
     normalize,
 )
 
@@ -129,6 +131,7 @@ class Trainer(MLFlowBase):
 
             ds_train = (
                 self.ds_train.map(process_path, num_parallel_calls=tf.data.AUTOTUNE)
+                .map(augment_data, num_parallel_calls=tf.data.AUTOTUNE)
                 .map(normalize, num_parallel_calls=tf.data.AUTOTUNE)
                 .shuffle(cardinality)
                 .batch(batch_size=batch_size)

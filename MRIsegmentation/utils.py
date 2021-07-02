@@ -71,7 +71,7 @@ def process_path(mri_path, mask_path):
     mri_img = tfio.experimental.image.decode_tiff(tf.io.read_file(mri_path))
     mri_img = mri_img[:, :, :-1]
     mask_img = tfio.experimental.image.decode_tiff(tf.io.read_file(mask_path))
-    mask_img = mask_img[:, :, 0]
+    mask_img = mask_img[:, :, -1]
 
     # . for label processisng use tf.strings.[split, substr, to_number]
     # tf.strings.split()
@@ -126,8 +126,8 @@ def augment_data(image, mask):
 
     elif tf.random.uniform((), minval=0, maxval=1) <= 0.70:
         angle = tf.random.uniform((), minval=-0.5, maxval=0.5)
-        image = tfa.image.rotate(image, angles=angle)
-        mask = tfa.image.rotate(mask, angles=angle)
+        image = tf.image.rotate(image, angles=angle)
+        mask = tf.image.rotate(mask, angles=angle)
 
     elif tf.random.uniform((), minval=0, maxval=1) <= 0.84:
         crop_val = tf.random.uniform((), minval=0.8, maxval=0.9)
@@ -139,3 +139,11 @@ def augment_data(image, mask):
         mask = mask
 
     return image, mask
+
+
+def flatten_mask(image, mask):
+    """
+    Flatten the mask to a binary value
+    Image is left unchanged
+    """
+    return image, mask[:, :, 0]
