@@ -17,7 +17,6 @@ from tensorboard.plugins.hparams import api as hp
 
 from MRIsegmentation.data import get_data_from_drive, holdout
 from MRIsegmentation.params import BUCKET_NAME, EXPERIMENT_NAME, MLFLOW_URI
-from MRIsegmentation.pipeline import get_pipeline
 from MRIsegmentation.model import get_model
 from MRIsegmentation.mlflow import MLFlowBase
 from MRIsegmentation.utils import (
