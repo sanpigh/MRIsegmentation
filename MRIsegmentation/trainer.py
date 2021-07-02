@@ -63,12 +63,12 @@ class Trainer(MLFlowBase):
         self.ds_train = None
         self.ds_val = None
         self.ds_test = None
+        self.model = None
 
     def train(self, params):
         # iterate on models
         for model_name, model_params in params.items():
 
-            line_count = model_params["line_count"]
             hyper_params = model_params["hyper_params"]
 
             # create a mlflow training
@@ -76,11 +76,10 @@ class Trainer(MLFlowBase):
 
             # log params
             self.mlflow_log_param("model_name", model_name)
-            self.mlflow_log_param("line_count", line_count)
             for key, value in hyper_params.items():
                 self.mlflow_log_param(key, value)
 
-            # get data
+            # get data frm drive
             df = get_data_from_drive()
             logging.info(f"Data loaded: {df.shape}")
 
@@ -156,6 +155,8 @@ class Trainer(MLFlowBase):
             save_model(model, model_name)
             logging.info(f"best {model_name} saved")
 
+            self.model = model
+
             # push best params & score to mlflow
             # for k, v in grid_search.best_params_.items():
             #    self.mlflow_log_param('best__' + k, v)
@@ -179,15 +180,14 @@ class Trainer(MLFlowBase):
                 "tversky_loss": tversky_loss,
             },
         )
-        print(self.ds_test, model)
-        return model.evaluate(
+        return self.model.evaluate(
             self.ds_test.map(process_path).map(normalize).batch(batch_size=16)
         )
 
 
 if __name__ == "__main__":
     # Define parameters to be evaluated
-    params = dict(vgg19=dict(line_count=1_000, hyper_params=dict()))
+    params = dict(vgg19=dict(hyper_params=dict()))
 
     # Run a trainer
     trainer = Trainer()
