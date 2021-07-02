@@ -140,6 +140,7 @@ class Trainer(MLFlowBase):
 
             ds_val = (
                 self.ds_val.map(process_path, num_parallel_calls=tf.data.AUTOTUNE)
+                .map(flatten_mask, num_parallel_calls=tf.data.AUTOTUNE)
                 .map(normalize, num_parallel_calls=tf.data.AUTOTUNE)
                 .batch(batch_size=batch_size)
             )
@@ -187,7 +188,10 @@ class Trainer(MLFlowBase):
             },
         )
         return self.model.evaluate(
-            self.ds_test.map(process_path).map(normalize).batch(batch_size=16)
+            self.ds_test.map(process_path)
+            .map(flatten_mask)
+            .map(normalize)
+            .batch(batch_size=16)
         )
 
     def predict(self, image):
