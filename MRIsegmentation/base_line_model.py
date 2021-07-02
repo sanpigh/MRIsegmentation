@@ -59,7 +59,7 @@ def base_line_model_retrieve():
     X = []
     y = []
 
-    for index, row in df.iloc[0:100].iterrows():
+    for index, row in df.iterrows():
         X.append(plt.imread(row['image_path']))
         y.append(plt.imread(row['mask_path']))
 
