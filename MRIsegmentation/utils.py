@@ -104,3 +104,38 @@ def dataviz_image_and_mask(tf_dataset, number_of_samples):
         axs[2].set_title("MRI with Mask")
         image[mask == 255] = (255, 0, 0)
         axs[2].imshow(image)
+
+
+def augment_data(image, mask):
+    if tf.random.uniform((), minval=0, maxval=1) <= 0.14:
+        delta_val = tf.random.uniform((), minval=-0.5, maxval=0.5)
+        image = tf.image.adjust_brightness(image, delta=0.1)
+        mask = tf.image.adjust_brightness(mask, delta=0.1)
+
+    elif tf.random.uniform((), minval=0, maxval=1) <= 0.28:
+        image = tf.image.adjust_contrast(image, contrast_factor=0.1)
+        mask = tf.image.adjust_contrast(mask, contrast_factor=0.1)
+
+    elif tf.random.uniform((), minval=0, maxval=1) <= 0.42:
+        image = tf.image.flip_left_right(image)
+        mask = tf.image.flip_left_right(mask)
+
+    elif tf.random.uniform((), minval=0, maxval=1) <= 0.56:
+        image = tf.image.flip_up_down(image)
+        mask = tf.image.flip_up_down(mask)
+
+    elif tf.random.uniform((), minval=0, maxval=1) <= 0.70:
+        angle = tf.random.uniform((), minval=-0.5, maxval=0.5)
+        image = tfa.image.rotate(image, angles=angle)
+        mask = tfa.image.rotate(mask, angles=angle)
+
+    elif tf.random.uniform((), minval=0, maxval=1) <= 0.84:
+        crop_val = tf.random.uniform((), minval=0.8, maxval=0.9)
+        image = tf.image.central_crop(image, central_fraction=crop_val)
+        mask = tf.image.central_crop(mask, central_fraction=crop_val)
+
+    else:
+        image = image
+        mask = mask
+
+    return image, mask
