@@ -52,7 +52,7 @@ class BaseLineModel():
 
 
 
-def base_line_model_retrieve():
+def get_data_for_base_line():
     # RETRIEVE DATA
     df = get_data_from_drive()
     # Create X_train and y_train from images and masks
