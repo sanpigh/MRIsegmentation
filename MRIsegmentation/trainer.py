@@ -125,7 +125,7 @@ class Trainer(MLFlowBase):
 
             batch_size = hyper_params["batch_size"]
 
-            cardinality = ds_train.cardinality()
+            cardinality = df.shape[0]
 
             ds_train = (
                 self.ds_train.map(process_path, num_parallel_calls=tf.data.AUTOTUNE)
