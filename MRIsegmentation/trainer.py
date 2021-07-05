@@ -32,7 +32,7 @@ from MRIsegmentation.utils import (
 
 def save_model(model: Model, model_name: str):
     model.save(
-        f"best_{model_name}.tf",
+        "model-brain-mri.tf",
     )
 
     # client = storage.Client()
@@ -47,14 +47,11 @@ def load_model_(model_name):
     # blob = bucket.blob("models/" + f"best_{model_name}.h5")
     # blob.download_to_filename(f"best_{model_name}.h5")
 
-    return load_model(
-        f"best_{model_name}.tf",
-        custom_objects={
-            "focal_tversky": focal_tversky,
-            "tversky": tversky,
-            "tversky_loss": tversky_loss,
-        },
-    )
+    model = get_model(model_name)
+
+    model.load_weights("model-brain-mri.tf")
+
+    return model
 
 
 class Trainer(MLFlowBase):
@@ -99,13 +96,16 @@ class Trainer(MLFlowBase):
             model.compile(optimizer=adam, loss=focal_tversky, metrics=[tversky])
 
             # callbacks
-            earlystopping = EarlyStopping(
-                monitor="val_loss", mode="min", verbose=1, patience=30
-            )
+            # earlystopping = EarlyStopping(
+            #    monitor="val_loss", mode="min", verbose=1, patience=30
+            # )
 
             # save the best model with lower validation loss
             checkpointer = ModelCheckpoint(
-                filepath="seg_model.h5", verbose=1, save_best_only=True
+                filepath="model-brain-mri.tf",
+                verbose=1,
+                save_best_only=True,
+                save_weights_only=True,
             )
 
             # reduce learning rate when on a plateau
@@ -150,7 +150,7 @@ class Trainer(MLFlowBase):
                 epochs=hyper_params["epochs"],
                 callbacks=[
                     checkpointer,
-                    earlystopping,
+                    # earlystopping,
                     reduce_lr,
                     tensorboard,
                     hyper_p,
