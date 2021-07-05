@@ -34,10 +34,13 @@ class BaseLineModel:
         # Segmentate tumor based on color
         # Input: tensor (number_of_images, image_height, image_width, channel).
         # Output: calculated mask (number_of_images, image_height, image_width, channel)
-
+        count = 0
         y_pred = None
-        print(f"Number of images processed:")
+        print(f"\n Number of images processed:")
         for img, mask in ds.map(process_path):  
+            count += 1
+            if count%500 == 0:
+                print(count, end='')
             img  = tf.cast(img, dtype=tf.float32)
             mask = tf.cast(mask, dtype=tf.float32)
             red_threshold = tf.math.reduce_mean(
