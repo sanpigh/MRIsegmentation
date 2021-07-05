@@ -1,7 +1,8 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from MRIsegmentation.data import get_data_from_drive
+#from MRIsegmentation.data import get_data_from_drive
+from MRIsegmentation.utils import process_path
 from MRIsegmentation.utils import tversky
 import tensorflow as tf
 
