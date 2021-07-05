@@ -7,8 +7,8 @@ from MRIsegmentation.utils import tversky
 import tensorflow as tf
 
 
-import numpy as np
 from MRIsegmentation.utils import tversky
+from MRIsegmentation.utils import flatten_mask, normalize
 
 
 class BaseLineModel:
@@ -37,11 +37,11 @@ class BaseLineModel:
         count = 0
         y_pred = None
         print(f"\n Number of images processed:")
-        for img, mask in ds.map(process_path):  
+        for img, mask in ds.map(process_path).map(flatten_mask).map(normalize):  
             count += 1
             if count%500 == 0:
-                print(count, end='')
-            img  = tf.cast(img, dtype=tf.float32)
+                print(count, end=' ')
+            img  = tf.cast(img,  dtype=tf.float32)
             mask = tf.cast(mask, dtype=tf.float32)
             red_threshold = tf.math.reduce_mean(
                 img[:, :, 0]
@@ -59,18 +59,18 @@ class BaseLineModel:
                 img[:, :, 2]
             )
 
-            red_pass = tf.cast(img[:, :, 0] < red_threshold, tf.float32)
+            red_pass   = tf.cast(img[:, :, 0] < red_threshold,   tf.float32)
             green_pass = tf.cast(img[:, :, 1] > green_threshold, tf.float32)
-            blue_pass = tf.cast(img[:, :, 2] < blue_threshold, tf.float32)
+            blue_pass  = tf.cast(img[:, :, 2] < blue_threshold,  tf.float32)
 
             if y_pred == None:
                 tmp = red_pass * green_pass * blue_pass
                 y_pred = tf.expand_dims(tmp, axis=0)
-                y_true = tf.expand_dims(mask[:,:,0], axis=0)
+                y_true = tf.expand_dims(mask[:,:], axis=0)
             else:
                 tmp = tf.expand_dims(red_pass * green_pass * blue_pass, axis=0)
                 y_pred = tf.concat([y_pred, tmp], axis=0)
-                tmp = tf.expand_dims(mask[:,:,0], axis=0)
+                tmp = tf.expand_dims(mask[:,:], axis=0)
                 y_true = tf.concat([y_true, tmp], axis=0)
 
         return y_pred, y_true
