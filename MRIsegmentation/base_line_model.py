@@ -25,8 +25,8 @@ class BaseLineModel:
     def score(self, ds):
         y_pred, y_true = self.predict(ds)
         IoU = tversky(
-            tf.cast(y_true, dtype=tf.float32), tf.cast(y_pred, dtype=tf.float32)
-            # y_true, y_pred
+            # tf.cast(y_true, dtype=tf.float32), tf.cast(y_pred, dtype=tf.float32)
+            y_true, y_pred
         )
         return IoU
 
@@ -59,9 +59,9 @@ class BaseLineModel:
                 img[:, :, 2]
             )
 
-            red_pass = tf.cast(img[:, :, 0] < red_threshold, tf.int32)
-            green_pass = tf.cast(img[:, :, 1] > green_threshold, tf.int32)
-            blue_pass = tf.cast(img[:, :, 2] < blue_threshold, tf.int32)
+            red_pass = tf.cast(img[:, :, 0] < red_threshold, tf.float32)
+            green_pass = tf.cast(img[:, :, 1] > green_threshold, tf.float32)
+            blue_pass = tf.cast(img[:, :, 2] < blue_threshold, tf.float32)
 
             if y_pred == None:
                 tmp = red_pass * green_pass * blue_pass
