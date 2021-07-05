@@ -32,7 +32,7 @@ from MRIsegmentation.utils import (
 
 def save_model(model: Model, model_name: str):
     model.save(
-        "model-brain-mri.tf",
+        f"{model_name}_ckpt.tf",
     )
 
     # client = storage.Client()
@@ -47,7 +47,7 @@ def load_model_(model_name):
     # blob = bucket.blob("models/" + f"best_{model_name}.h5")
     # blob.download_to_filename(f"best_{model_name}.h5")
 
-    model = get_model(model_name)
+    model = get_model()
 
     model.load_weights("model-brain-mri.tf")
 
