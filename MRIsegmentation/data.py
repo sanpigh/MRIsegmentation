@@ -45,7 +45,7 @@ def list_blobs(bucket_name):
     return lb
 
 
-def holdout(df, train_ratio=0.8):
+def holdout(df, train_ratio=0.8, test_to_val_ratio=0.5):
 
     img_paths = df["image_path"].values
     msk_paths = df["mask_path"].values
@@ -53,7 +53,7 @@ def holdout(df, train_ratio=0.8):
     df_mask = df[df["mask"] == 1]
 
     df_train, df_val = train_test_split(df_mask, train_size=train_ratio)
-    df_test, df_val = train_test_split(df_val, test_size=0.5)
+    df_test, df_val = train_test_split(df_val, test_size=test_to_val_ratio)
 
     ds_train = tf.data.Dataset.from_tensor_slices(
         (df_train["image_path"].values, df_train["mask_path"].values)
