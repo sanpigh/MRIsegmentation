@@ -10,6 +10,7 @@ from tensorflow.keras.callbacks import (
     LearningRateScheduler,
     TensorBoard,
 )
+from tensorflow.keras.metrics import MeanIoU
 from tensorflow.keras.optimizers import Adam
 
 from tensorboard.plugins.hparams import api as hp
@@ -56,7 +57,14 @@ def load_model_(model_name):
 
     # model = tf.saved_model.load(f"{GDRIVE_DATA_PATH}{model_name}_ckpt")
 
-    model = load_model(f"{GDRIVE_DATA_PATH}{model_name}_ckpt")
+    model = load_model(
+        f"{GDRIVE_DATA_PATH}{model_name}_ckpt",
+        custom_objects={
+            "focal_tversky": focal_tversky,
+            "tversky": tversky,
+            "tversky_loss": tversky_loss,
+        },
+    )
     print(model.summary())
 
     return model
@@ -110,10 +118,10 @@ class Trainer(MLFlowBase):
 
             # save the best model with lower validation loss
             checkpointer = ModelCheckpoint(
-                filepath="model-brain-mri.tf",
+                filepath=f"{GDRIVE_DATA_PATH}{model_name}_ckpt",
                 verbose=1,
                 save_best_only=True,
-                save_weights_only=True,
+                # save_weights_only=True,
             )
 
             # reduce learning rate when on a plateau
@@ -165,10 +173,6 @@ class Trainer(MLFlowBase):
                 ],
                 validation_data=ds_val,
             )
-
-            # save the trained model
-            save_model_(model, model_name)
-            logging.info(f"best {model_name} saved")
 
             self.model = model
 
