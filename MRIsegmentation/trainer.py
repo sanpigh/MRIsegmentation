@@ -186,11 +186,14 @@ class Trainer(MLFlowBase):
     def evaluate(self, model_name="vgg19"):
         model: Model = load_model_(
             f"best_{model_name}.tf",
-            custom_objects={
-                "focal_tversky": focal_tversky,
-                "tversky": tversky,
-                "tversky_loss": tversky_loss,
-            },
+        )
+        print(
+            model.evaluate(
+                self.ds_test.map(process_path)
+                .map(flatten_mask)
+                .map(normalize)
+                .batch(batch_size=16)
+            )
         )
         return self.model.evaluate(
             self.ds_test.map(process_path)
