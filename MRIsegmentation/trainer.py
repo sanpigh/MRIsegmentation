@@ -16,8 +16,12 @@ from tensorboard.plugins.hparams import api as hp
 
 
 from MRIsegmentation.data import get_data_from_drive, holdout
-from MRIsegmentation.params import BUCKET_NAME, EXPERIMENT_NAME, MLFLOW_URI
-from MRIsegmentation.pipeline import get_pipeline
+from MRIsegmentation.params import (
+    BUCKET_NAME,
+    EXPERIMENT_NAME,
+    MLFLOW_URI,
+    GDRIVE_DATA_PATH,
+)
 from MRIsegmentation.model import get_model
 from MRIsegmentation.mlflow import MLFlowBase
 from MRIsegmentation.utils import (
@@ -31,9 +35,9 @@ from MRIsegmentation.utils import (
 )
 
 
-def save_model(model: Model, model_name: str):
+def save_model_(model: Model, model_name: str):
     model.save(
-        f"best_{model_name}.tf",
+        f"{GDRIVE_DATA_PATH}{model_name}_ckpt.tf",
     )
 
     # client = storage.Client()
@@ -48,14 +52,11 @@ def load_model_(model_name):
     # blob = bucket.blob("models/" + f"best_{model_name}.h5")
     # blob.download_to_filename(f"best_{model_name}.h5")
 
-    return load_model(
-        f"best_{model_name}.tf",
-        custom_objects={
-            "focal_tversky": focal_tversky,
-            "tversky": tversky,
-            "tversky_loss": tversky_loss,
-        },
-    )
+    model = get_model()
+
+    model.load_weights(f"{GDRIVE_DATA_PATH}{model_name}_ckpt.tf")
+
+    return model
 
 
 class Trainer(MLFlowBase):
@@ -100,13 +101,16 @@ class Trainer(MLFlowBase):
             model.compile(optimizer=adam, loss=focal_tversky, metrics=[tversky])
 
             # callbacks
-            earlystopping = EarlyStopping(
-                monitor="val_loss", mode="min", verbose=1, patience=30
-            )
+            # earlystopping = EarlyStopping(
+            #    monitor="val_loss", mode="min", verbose=1, patience=30
+            # )
 
             # save the best model with lower validation loss
             checkpointer = ModelCheckpoint(
-                filepath="seg_model.h5", verbose=1, save_best_only=True
+                filepath="model-brain-mri.tf",
+                verbose=1,
+                save_best_only=True,
+                save_weights_only=True,
             )
 
             # reduce learning rate when on a plateau
@@ -131,7 +135,7 @@ class Trainer(MLFlowBase):
 
             ds_train = (
                 self.ds_train.map(process_path, num_parallel_calls=tf.data.AUTOTUNE)
-                # .map(augment_data, num_parallel_calls=tf.data.AUTOTUNE)
+                .map(augment_data, num_parallel_calls=tf.data.AUTOTUNE)
                 .map(flatten_mask, num_parallel_calls=tf.data.AUTOTUNE)
                 .map(normalize, num_parallel_calls=tf.data.AUTOTUNE)
                 .shuffle(cardinality)
@@ -141,6 +145,7 @@ class Trainer(MLFlowBase):
 
             ds_val = (
                 self.ds_val.map(process_path, num_parallel_calls=tf.data.AUTOTUNE)
+                .map(flatten_mask, num_parallel_calls=tf.data.AUTOTUNE)
                 .map(normalize, num_parallel_calls=tf.data.AUTOTUNE)
                 .batch(batch_size=batch_size)
             )
@@ -150,7 +155,7 @@ class Trainer(MLFlowBase):
                 epochs=hyper_params["epochs"],
                 callbacks=[
                     checkpointer,
-                    earlystopping,
+                    # earlystopping,
                     reduce_lr,
                     tensorboard,
                     hyper_p,
@@ -159,7 +164,7 @@ class Trainer(MLFlowBase):
             )
 
             # save the trained model
-            save_model(model, model_name)
+            save_model_(model, model_name)
             logging.info(f"best {model_name} saved")
 
             self.model = model
@@ -179,7 +184,7 @@ class Trainer(MLFlowBase):
         return (f"goto {MLFLOW_URI}/#/experiments/{self.mlflow_experiment_id}", history)
 
     def evaluate(self, model_name="vgg19"):
-        model: Model = load_model(
+        model: Model = load_model_(
             f"best_{model_name}.tf",
             custom_objects={
                 "focal_tversky": focal_tversky,
@@ -188,7 +193,10 @@ class Trainer(MLFlowBase):
             },
         )
         return self.model.evaluate(
-            self.ds_test.map(process_path).map(normalize).batch(batch_size=16)
+            self.ds_test.map(process_path)
+            .map(flatten_mask)
+            .map(normalize)
+            .batch(batch_size=16)
         )
 
     def predict(self, image):
