@@ -119,7 +119,7 @@ class Trainer(MLFlowBase):
 
             # save the best model with lower validation loss
             checkpointer = ModelCheckpoint(
-                filepath=f"{GDRIVE_DATA_PATH}{model_name}_ckpt",
+                filepath=f"{GDRIVE_DATA_PATH}{model_name}_ckpt.h5",
                 verbose=1,
                 save_best_only=True,
                 # save_weights_only=True,
