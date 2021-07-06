@@ -40,6 +40,8 @@ def save_model_(model: Model, model_name: str):
         f"{GDRIVE_DATA_PATH}{model_name}_ckpt.tf",
     )
 
+    tf.saved_model.save(model, f"{GDRIVE_DATA_PATH}")
+
     # client = storage.Client()
     # bucket = client.bucket(BUCKET_NAME)
     # blob = bucket.blob("models/" + f"best_{model_name}.h5")
@@ -52,9 +54,10 @@ def load_model_(model_name):
     # blob = bucket.blob("models/" + f"best_{model_name}.h5")
     # blob.download_to_filename(f"best_{model_name}.h5")
 
-    model = get_model()
+    # model = get_model()
+    # model.load_weights(f"{GDRIVE_DATA_PATH}{model_name}_ckpt.tf")
 
-    model.load_weights(f"{GDRIVE_DATA_PATH}{model_name}_ckpt.tf")
+    model = tf.saved_model.load(f"{GDRIVE_DATA_PATH}")
 
     return model
 
