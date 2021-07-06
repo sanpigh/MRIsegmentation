@@ -66,7 +66,7 @@ def load_model_(model_name):
             "focal_tversky": focal_tversky,
         },
     )
-    print(model.summary())
+    model.compile(loss=model.loss, optimizer=model.optimizer, metrics=[tversky])
 
     return model
 
@@ -196,23 +196,13 @@ class Trainer(MLFlowBase):
 
     def evaluate(self, model_name="vgg19"):
         model: Model = load_model_(model_name)
-        print(
-            model.evaluate(
-                self.ds_test.map(process_path)
-                .map(flatten_mask)
-                .map(normalize)
-                .batch(batch_size=16)
-            )
-        )
-        return self.model.evaluate(
+
+        return model.evaluate(
             self.ds_test.map(process_path)
             .map(flatten_mask)
             .map(normalize)
             .batch(batch_size=16)
         )
-
-    def predict(self, image):
-        return self.model.predict(image)
 
 
 if __name__ == "__main__":
