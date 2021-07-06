@@ -16,7 +16,12 @@ from tensorboard.plugins.hparams import api as hp
 
 
 from MRIsegmentation.data import get_data_from_drive, holdout
-from MRIsegmentation.params import BUCKET_NAME, EXPERIMENT_NAME, MLFLOW_URI
+from MRIsegmentation.params import (
+    BUCKET_NAME,
+    EXPERIMENT_NAME,
+    MLFLOW_URI,
+    GDRIVE_DATA_PATH,
+)
 from MRIsegmentation.model import get_model
 from MRIsegmentation.mlflow import MLFlowBase
 from MRIsegmentation.utils import (
@@ -30,9 +35,9 @@ from MRIsegmentation.utils import (
 )
 
 
-def save_model(model: Model, model_name: str):
+def save_model_(model: Model, model_name: str):
     model.save(
-        f"{model_name}_ckpt.tf",
+        f"{GDRIVE_DATA_PATH}{model_name}_ckpt.tf",
     )
 
     # client = storage.Client()
@@ -49,7 +54,7 @@ def load_model_(model_name):
 
     model = get_model()
 
-    model.load_weights("model-brain-mri.tf")
+    model.load_weights(f"{GDRIVE_DATA_PATH}{model_name}_ckpt.tf")
 
     return model
 
@@ -159,7 +164,7 @@ class Trainer(MLFlowBase):
             )
 
             # save the trained model
-            save_model(model, model_name)
+            save_model_(model, model_name)
             logging.info(f"best {model_name} saved")
 
             self.model = model
@@ -179,7 +184,7 @@ class Trainer(MLFlowBase):
         return (f"goto {MLFLOW_URI}/#/experiments/{self.mlflow_experiment_id}", history)
 
     def evaluate(self, model_name="vgg19"):
-        model: Model = load_model(
+        model: Model = load_model_(
             f"best_{model_name}.tf",
             custom_objects={
                 "focal_tversky": focal_tversky,
