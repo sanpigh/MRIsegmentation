@@ -2,7 +2,7 @@ from google.cloud import storage
 import logging
 
 import tensorflow as tf
-from tensorflow.keras.models import Model, load_model
+from tensorflow.keras.models import Model, load_model,
 from tensorflow.keras.callbacks import (
     ReduceLROnPlateau,
     EarlyStopping,
@@ -56,7 +56,7 @@ def load_model_(model_name):
 
     # model = tf.saved_model.load(f"{GDRIVE_DATA_PATH}{model_name}_ckpt")
 
-    model = tf.keras.models.load_model(f"{GDRIVE_DATA_PATH}{model_name}_ckpt")
+    model = load_model(f"{GDRIVE_DATA_PATH}{model_name}_ckpt")
     print(model.summary())
 
     return model
