@@ -39,7 +39,7 @@ from MRIsegmentation.utils import (
 def save_model_(model: Model, model_name: str):
     print(model.summary())
     model.save(
-        f"{GDRIVE_DATA_PATH}{model_name}_final.h5",
+        f"{GDRIVE_DATA_PATH}{model_name}_final",
     )
 
     # client = storage.Client()
@@ -60,7 +60,7 @@ def load_model_(model_name):
     # model = tf.saved_model.load(f"{GDRIVE_DATA_PATH}{model_name}_ckpt")
 
     model = load_model(
-        f"{GDRIVE_DATA_PATH}{model_name}_final.h5",
+        f"{GDRIVE_DATA_PATH}{model_name}_final",
         custom_objects={
             "tversky": tversky,
             "focal_tversky": focal_tversky,
@@ -119,7 +119,7 @@ class Trainer(MLFlowBase):
 
             # save the best model with lower validation loss
             checkpointer = ModelCheckpoint(
-                filepath=f"{GDRIVE_DATA_PATH}{model_name}_ckpt.h5",
+                filepath=f"{GDRIVE_DATA_PATH}{model_name}_ckpt",
                 verbose=1,
                 save_best_only=True,
                 # save_weights_only=True,
