@@ -36,7 +36,7 @@ from MRIsegmentation.utils import (
 
 
 def save_model_(model: Model, model_name: str):
-    tf.saved_model.save(model, f"{GDRIVE_DATA_PATH}{model_name}_ckpt")
+    model.save(f"{GDRIVE_DATA_PATH}{model_name}_ckpt")
 
     # client = storage.Client()
     # bucket = client.bucket(BUCKET_NAME)
@@ -53,7 +53,9 @@ def load_model_(model_name):
     # model = get_model()
     # model.load_weights(f"{GDRIVE_DATA_PATH}{model_name}_ckpt.tf")
 
-    model = tf.saved_model.load(f"{GDRIVE_DATA_PATH}{model_name}_ckpt")
+    #model = tf.saved_model.load(f"{GDRIVE_DATA_PATH}{model_name}_ckpt")
+
+    model = tf.keras.models.load_model(f"{GDRIVE_DATA_PATH}{model_name}_ckpt")
 
     return model
 
@@ -185,6 +187,8 @@ class Trainer(MLFlowBase):
     def evaluate(self, model_name="vgg19"):
         model: Model = load_model_(model_name)
         print(
+            infer = model.signatures["serving_default"]
+            out = infer(key=tf.constant('something_unique'), image_bytes=tf.constant(inp))
             model.evaluate(
                 self.ds_test.map(process_path)
                 .map(flatten_mask)
