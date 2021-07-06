@@ -64,7 +64,6 @@ def load_model_(model_name):
         custom_objects={
             "focal_tversky": focal_tversky,
             "tversky": tversky,
-            "tversky_loss": tversky_loss,
         },
     )
     print(model.summary())
