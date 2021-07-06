@@ -37,28 +37,16 @@ from MRIsegmentation.utils import (
 
 
 def save_model_(model: Model, model_name: str):
-    print(model.summary())
     model.save(
         f"{GDRIVE_DATA_PATH}{model_name}_final.h5",
     )
 
-    client = storage.Client()
-    bucket = client.bucket(BUCKET_NAME)
-    blob = bucket.blob("models/" + f"{model_name}_final.h5")
-    blob.upload_from_filename(f"{model_name}_final.h5")
-
 
 def load_model_(model_name):
-    # client = storage.Client()
-    # bucket = client.bucket(BUCKET_NAME)
-    # blob = bucket.blob("models/" + f"best_{model_name}.h5")
-    # blob.download_to_filename(f"best_{model_name}.h5")
-
-    # model = get_model()
-    # model.load_weights(f"{GDRIVE_DATA_PATH}{model_name}_ckpt.tf")
-
-    # model = tf.saved_model.load(f"{GDRIVE_DATA_PATH}{model_name}_ckpt")
-
+    # Load models
+    # see: https://stackoverflow.com/questions/65549053/typeerror-not-supported-between-instances-of-function-and-str
+    #      https://colab.research.google.com/notebooks/snippets/gcs.ipynb#scrollTo=LADpx7LReOMk
+    #
     model = load_model(
         f"{GDRIVE_DATA_PATH}{model_name}_final.h5",
         custom_objects={
@@ -66,6 +54,7 @@ def load_model_(model_name):
             "focal_tversky": focal_tversky,
         },
     )
+    # Compile models
     model.compile(loss=model.loss, optimizer=model.optimizer, metrics=[tversky])
 
     return model
