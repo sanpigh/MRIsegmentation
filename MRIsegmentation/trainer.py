@@ -184,9 +184,7 @@ class Trainer(MLFlowBase):
         return (f"goto {MLFLOW_URI}/#/experiments/{self.mlflow_experiment_id}", history)
 
     def evaluate(self, model_name="vgg19"):
-        model: Model = load_model_(
-            f"best_{model_name}.tf",
-        )
+        model: Model = load_model_(model_name)
         print(
             model.evaluate(
                 self.ds_test.map(process_path)
