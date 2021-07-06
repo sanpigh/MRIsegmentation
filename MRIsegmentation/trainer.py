@@ -36,11 +36,7 @@ from MRIsegmentation.utils import (
 
 
 def save_model_(model: Model, model_name: str):
-    model.save(
-        f"{GDRIVE_DATA_PATH}{model_name}_ckpt.tf",
-    )
-
-    tf.saved_model.save(model, f"{GDRIVE_DATA_PATH}")
+    tf.saved_model.save(model, f"{GDRIVE_DATA_PATH}{model_name}_ckpt")
 
     # client = storage.Client()
     # bucket = client.bucket(BUCKET_NAME)
@@ -57,7 +53,7 @@ def load_model_(model_name):
     # model = get_model()
     # model.load_weights(f"{GDRIVE_DATA_PATH}{model_name}_ckpt.tf")
 
-    model = tf.saved_model.load(f"{GDRIVE_DATA_PATH}")
+    model = tf.saved_model.load(f"{GDRIVE_DATA_PATH}{model_name}_ckpt")
 
     return model
 
