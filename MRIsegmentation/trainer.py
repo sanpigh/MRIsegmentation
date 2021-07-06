@@ -39,7 +39,7 @@ from MRIsegmentation.utils import (
 def save_model_(model: Model, model_name: str):
     print(model.summary())
     model.save(
-        f"{GDRIVE_DATA_PATH}{model_name}_ckpt.h5",
+        f"{GDRIVE_DATA_PATH}{model_name}_final.h5",
     )
 
     # client = storage.Client()
@@ -60,7 +60,7 @@ def load_model_(model_name):
     # model = tf.saved_model.load(f"{GDRIVE_DATA_PATH}{model_name}_ckpt")
 
     model = load_model(
-        f"{GDRIVE_DATA_PATH}{model_name}_ckpt.h5",
+        f"{GDRIVE_DATA_PATH}{model_name}_final.h5",
         custom_objects={
             "focal_tversky": focal_tversky,
             "tversky": tversky,
@@ -175,6 +175,9 @@ class Trainer(MLFlowBase):
                 ],
                 validation_data=ds_val,
             )
+
+            save_model_(model, model_name)
+            logging.info(f"Saving model: {model_name}")
 
             self.model = model
 
