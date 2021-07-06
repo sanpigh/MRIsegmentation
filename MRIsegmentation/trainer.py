@@ -62,7 +62,6 @@ def load_model_(model_name):
     model = load_model(
         f"{GDRIVE_DATA_PATH}{model_name}_final.h5",
         custom_objects={
-            "focal_tversky": focal_tversky,
             "tversky": tversky,
         },
     )
