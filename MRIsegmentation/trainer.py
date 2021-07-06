@@ -39,13 +39,13 @@ from MRIsegmentation.utils import (
 def save_model_(model: Model, model_name: str):
     print(model.summary())
     model.save(
-        f"{GDRIVE_DATA_PATH}{model_name}_final",
+        f"{GDRIVE_DATA_PATH}{model_name}_final.h5",
     )
 
-    # client = storage.Client()
-    # bucket = client.bucket(BUCKET_NAME)
-    # blob = bucket.blob("models/" + f"best_{model_name}.h5")
-    # blob.upload_from_filename(f"best_{model_name}.h5")
+    client = storage.Client()
+    bucket = client.bucket(BUCKET_NAME)
+    blob = bucket.blob("models/" + f"{model_name}_final.h5")
+    blob.upload_from_filename(f"{model_name}_final.h5")
 
 
 def load_model_(model_name):
@@ -60,7 +60,7 @@ def load_model_(model_name):
     # model = tf.saved_model.load(f"{GDRIVE_DATA_PATH}{model_name}_ckpt")
 
     model = load_model(
-        f"{GDRIVE_DATA_PATH}{model_name}_final",
+        f"{GDRIVE_DATA_PATH}{model_name}_final.h5",
         custom_objects={
             "tversky": tversky,
             "focal_tversky": focal_tversky,
