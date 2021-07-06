@@ -36,6 +36,7 @@ from MRIsegmentation.utils import (
 
 
 def save_model_(model: Model, model_name: str):
+    print(model.summary())
     model.save(f"{GDRIVE_DATA_PATH}{model_name}_ckpt")
 
     # client = storage.Client()
@@ -56,6 +57,7 @@ def load_model_(model_name):
     # model = tf.saved_model.load(f"{GDRIVE_DATA_PATH}{model_name}_ckpt")
 
     model = tf.keras.models.load_model(f"{GDRIVE_DATA_PATH}{model_name}_ckpt")
+    print(model.summary())
 
     return model
 
