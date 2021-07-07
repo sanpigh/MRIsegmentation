@@ -102,9 +102,9 @@ class Trainer(MLFlowBase):
             model.compile(optimizer=adam, loss=focal_tversky, metrics=[tversky])
 
             # callbacks
-            # earlystopping = EarlyStopping(
-            #    monitor="val_loss", mode="min", verbose=1, patience=30
-            # )
+            earlystopping = EarlyStopping(
+                monitor="val_loss", mode="min", verbose=1, patience=30
+            )
 
             # save the best model with lower validation loss
             checkpointer = ModelCheckpoint(
