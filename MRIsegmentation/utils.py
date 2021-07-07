@@ -141,7 +141,7 @@ def flatten_mask(image, mask):
     """
     return image, mask[:, :, 0]
 
-def Dataviz(data_set, number_of_samples, model=True, threshold=1, ascending= True):
+def Dataviz(data_set, number_of_samples, model=None, threshold=1, ascending= True):
     ''' takes one dataset and shows the original images with their predicted mask and tversky_score
     it can also show only the original images and their masks if the parameter model is set to None '''
     if model == None:
