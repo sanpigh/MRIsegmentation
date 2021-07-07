@@ -103,7 +103,7 @@ def dataviz_image_and_mask(tf_dataset, number_of_samples):
         axs[1].imshow(mask, cmap="gray")
 
         axs[2].set_title("MRI with Mask")
-        image[mask == 255] = (255, 0, 0)
+        image[mask == 1] = (255, 0, 0)
         axs[2].imshow(image)
 
 

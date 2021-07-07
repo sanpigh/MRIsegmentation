@@ -88,7 +88,7 @@ class Trainer(MLFlowBase):
             logging.info(f"Data loaded: {df.shape}")
 
             # holdout
-            self.ds_train, self.ds_val, self.ds_test = holdout(df, include_all=True)
+            self.ds_train, self.ds_val, self.ds_test = holdout(df, include_all=False)
 
             # log params
             logging.info(f"Loading model: {model_name}")
